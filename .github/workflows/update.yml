@@ -1,0 +1,61 @@
+name: Update Hosts and Docs
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run update scripts
+        run: |
+          bash scripts/update_hosts.sh
+          python scripts/update_hosts.py
+
+      - name: Sync hosts to docs
+        run: |
+          cp hosts/steam_hosts docs/steam_hosts
+          cp hosts/epic_hosts docs/epic_hosts
+
+      - name: Generate update log (keep last 10)
+        run: |
+          LOG_FILE="docs/update_log.json"
+          
+          steam_time=$(head -n 1 hosts/steam_hosts | sed 's/# Generated hosts - //')
+          steam_version=$(echo $steam_time | sed 's/[^0-9]//g')
+          epic_time=$(head -n 1 hosts/epic_hosts | sed 's/# Generated hosts - //')
+          epic_version=$(echo $epic_time | sed 's/[^0-9]//g')
+
+          if [ -f "$LOG_FILE" ]; then
+            old_log=$(cat $LOG_FILE)
+            steam_hist=$(echo $old_log | jq '.steam')
+            epic_hist=$(echo $old_log | jq '.epic')
+          else
+            steam_hist="[]"
+            epic_hist="[]"
+          fi
+
+          steam_hist=$(echo "$steam_hist" | jq --arg ver "$steam_version" --arg time "$steam_time" '([{"version":$ver,"time":$time}] + .)[:10]')
+          epic_hist=$(echo "$epic_hist" | jq --arg ver "$epic_version" --arg time "$epic_time" '([{"version":$ver,"time":$time}] + .)[:10]')
+
+          jq -n --argjson steam "$steam_hist" --argjson epic "$epic_hist" '{steam: $steam, epic: $epic}' > $LOG_FILE
+
+      - name: Commit and Push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add docs/*
+          git commit -m "Update hosts and docs $(date +'%Y-%m-%d')"
+          git push
