@@ -21,7 +21,6 @@ jobs:
 
       - name: Run update scripts
         run: |
-          bash scripts/update_hosts.sh
           python scripts/update_hosts.py
 
       - name: Sync hosts to docs
