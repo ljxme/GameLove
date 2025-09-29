@@ -1,60 +1,104 @@
-name: Update Hosts and Docs
+name: Update GameLove Hosts
 
 on:
   schedule:
-    - cron: '0 3 * * *'
+    # 每小时自动更新一次
+    - cron: '0 * * * *'
   workflow_dispatch:
+    inputs:
+      force_update:
+        description: '强制更新'
+        required: false
+        default: 'false'
+        type: boolean
 
 jobs:
-  update:
+  update-hosts:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run update scripts
-        run: |
-          python scripts/update_hosts.py
-
-      - name: Sync hosts to docs
-        run: |
-          cp hosts/steam_hosts docs/steam_hosts
-          cp hosts/epic_hosts docs/epic_hosts
-
-      - name: Generate update log (keep last 10)
-        run: |
-          LOG_FILE="docs/update_log.json"
+    - name: 检出代码
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: 设置 Python 环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: 生成 hosts 文件
+      run: |
+        cd scripts
+        python update_hosts.py
+    
+    - name: 检查是否有更新
+      id: check_changes
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+          echo "发现文件变更"
+        else
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+          echo "没有文件变更"
+        fi
+    
+    - name: 提交更新
+      if: steps.check_changes.outputs.has_changes == 'true' || github.event.inputs.force_update == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git commit -m "🎮 自动更新 GameLove hosts 文件 - $(date '+%Y-%m-%d %H:%M:%S')"
+        git push
+    
+    - name: 创建发布版本
+      if: steps.check_changes.outputs.has_changes == 'true' || github.event.inputs.force_update == 'true'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: GameLove Hosts v${{ github.run_number }}
+        body: |
+          🎮 GameLove 游戏平台网络优化 - 自动更新
           
-          steam_time=$(head -n 1 hosts/steam_hosts | sed 's/# Generated hosts - //')
-          steam_version=$(echo $steam_time | sed 's/[^0-9]//g')
-          epic_time=$(head -n 1 hosts/epic_hosts | sed 's/# Generated hosts - //')
-          epic_version=$(echo $epic_time | sed 's/[^0-9]//g')
-
-          if [ -f "$LOG_FILE" ]; then
-            old_log=$(cat $LOG_FILE)
-            steam_hist=$(echo $old_log | jq '.steam')
-            epic_hist=$(echo $old_log | jq '.epic')
-          else
-            steam_hist="[]"
-            epic_hist="[]"
-          fi
-
-          steam_hist=$(echo "$steam_hist" | jq --arg ver "$steam_version" --arg time "$steam_time" '([{"version":$ver,"time":$time}] + .)[:10]')
-          epic_hist=$(echo "$epic_hist" | jq --arg ver "$epic_version" --arg time "$epic_time" '([{"version":$ver,"time":$time}] + .)[:10]')
-
-          jq -n --argjson steam "$steam_hist" --argjson epic "$epic_hist" '{steam: $steam, epic: $epic}' > $LOG_FILE
-
-      - name: Commit and Push
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add docs/*
-          git commit -m "Update hosts and docs $(date +'%Y-%m-%d')"
-          git push
+          📅 更新时间: ${{ steps.date.outputs.date }}
+          🔄 更新方式: 自动更新
+          
+          ## 📥 快速使用
+          
+          ### 方法一：直接下载
+          ```bash
+          # Windows (管理员权限)
+          curl -o C:\Windows\System32\drivers\etc\hosts https://raw.githubusercontent.com/${{ github.repository }}/main/hosts
+          
+          # Linux/Mac
+          sudo curl -o /etc/hosts https://raw.githubusercontent.com/${{ github.repository }}/main/hosts
+          ```
+          
+          ### 方法二：SwitchHosts
+          - URL: `https://raw.githubusercontent.com/${{ github.repository }}/main/hosts`
+          - 自动刷新: 1小时
+          
+          ## 🎯 支持平台
+          - Steam
+          - Epic Games
+          - Origin (EA)
+          - Uplay (Ubisoft)
+          - Battle.net (Blizzard)
+          - GOG
+          - Rockstar Games
+          
+          让你"爱"上游戏，解决访问慢、连接超时的问题！
+        draft: false
+        prerelease: false
+    
+    - name: 获取当前时间
+      id: date
+      run: echo "date=$(date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_OUTPUT
