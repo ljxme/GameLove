@@ -21,180 +21,79 @@
         </header>
 
         <!-- Controls -->
-        <div class="bg-white rounded-xl shadow-game p-6 mb-8">
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
             <div class="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div class="flex gap-3">
-                    <button id="testAllBtn" class="btn btn-primary">
-                        <i class="fas fa-search mr-2"></i>检测所有域名
+                    <button id="test-all-btn" class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium">
+                        <i class="fas fa-play mr-2"></i>测试所有
                     </button>
-                    <button id="refreshBtn" class="btn btn-secondary">
-                        <i class="fas fa-sync-alt mr-2"></i>刷新状态
+                    <button id="refresh-btn" class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200 font-medium" onclick="location.reload()">
+                        <i class="fas fa-sync-alt mr-2"></i>刷新页面
                     </button>
                 </div>
                 <div class="flex flex-col md:flex-row gap-4 text-sm text-gray-600">
-                    <span id="lastUpdate" class="flex items-center">
+                    <span id="last-update-time" class="flex items-center">
                         <i class="fas fa-clock mr-1"></i>最后更新: --
                     </span>
-                    <span id="totalStats" class="flex items-center">
-                        <i class="fas fa-list mr-1"></i>总计: -- 个域名
+                    <span class="flex items-center">
+                        <i class="fas fa-list mr-1"></i>总计: <span id="total-count" class="ml-1 font-semibold">--</span> 个域名
                     </span>
                 </div>
             </div>
         </div>
 
         <!-- Stats Overview -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div class="status-card status-success">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-gray-400">
                 <div class="flex items-center justify-between">
                     <div>
-                        <div class="text-2xl font-bold" id="successCount">--</div>
-                        <div class="text-sm">连通正常</div>
+                        <div class="text-2xl font-bold text-gray-700" id="total-count">--</div>
+                        <div class="text-sm text-gray-600">总计</div>
                     </div>
-                    <i class="fas fa-check-circle text-2xl"></i>
+                    <i class="fas fa-list text-2xl text-gray-400"></i>
                 </div>
             </div>
-            <div class="status-card status-warning">
+            <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
                 <div class="flex items-center justify-between">
                     <div>
-                        <div class="text-2xl font-bold" id="warningCount">--</div>
-                        <div class="text-sm">响应较慢</div>
+                        <div class="text-2xl font-bold text-green-600" id="success-count">--</div>
+                        <div class="text-sm text-gray-600">连通正常</div>
                     </div>
-                    <i class="fas fa-exclamation-triangle text-2xl"></i>
+                    <i class="fas fa-check-circle text-2xl text-green-500"></i>
                 </div>
             </div>
-            <div class="status-card status-error">
+            <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-yellow-500">
                 <div class="flex items-center justify-between">
                     <div>
-                        <div class="text-2xl font-bold" id="errorCount">--</div>
-                        <div class="text-sm">连接失败</div>
+                        <div class="text-2xl font-bold text-yellow-600" id="warning-count">--</div>
+                        <div class="text-sm text-gray-600">响应较慢</div>
                     </div>
-                    <i class="fas fa-times-circle text-2xl"></i>
+                    <i class="fas fa-exclamation-triangle text-2xl text-yellow-500"></i>
                 </div>
             </div>
-            <div class="status-card status-testing">
+            <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-red-500">
                 <div class="flex items-center justify-between">
                     <div>
-                        <div class="text-2xl font-bold" id="testingCount">--</div>
-                        <div class="text-sm">检测中</div>
+                        <div class="text-2xl font-bold text-red-600" id="error-count">--</div>
+                        <div class="text-sm text-gray-600">连接失败</div>
                     </div>
-                    <i class="fas fa-spinner fa-spin text-2xl"></i>
+                    <i class="fas fa-times-circle text-2xl text-red-500"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-2xl font-bold text-blue-600" id="testing-count">--</div>
+                        <div class="text-sm text-gray-600">检测中</div>
+                    </div>
+                    <i class="fas fa-spinner text-2xl text-blue-500"></i>
                 </div>
             </div>
         </div>
 
         <!-- Platforms -->
-        <div class="space-y-6">
-            <!-- Steam 平台 -->
-            <div class="platform-card" data-platform="steam">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center">
-                        <i class="fab fa-steam text-2xl text-blue-600 mr-3"></i>
-                        <h2 class="text-xl font-semibold text-gray-800">Steam</h2>
-                    </div>
-                    <div class="platform-stats text-sm text-gray-600">
-                        <span class="platform-success font-semibold">0</span> / <span class="platform-total">0</span>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="steam-domains">
-                    <!-- Steam 域名将通过 TypeScript 动态加载 -->
-                </div>
-            </div>
-
-            <!-- Epic Games 平台 -->
-            <div class="platform-card" data-platform="epic">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center">
-                        <i class="fas fa-store text-2xl text-purple-600 mr-3"></i>
-                        <h2 class="text-xl font-semibold text-gray-800">Epic Games</h2>
-                    </div>
-                    <div class="platform-stats text-sm text-gray-600">
-                        <span class="platform-success font-semibold">0</span> / <span class="platform-total">0</span>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="epic-domains">
-                    <!-- Epic 域名将通过 TypeScript 动态加载 -->
-                </div>
-            </div>
-
-            <!-- Origin 平台 -->
-            <div class="platform-card" data-platform="origin">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center">
-                        <i class="fas fa-bullseye text-2xl text-orange-600 mr-3"></i>
-                        <h2 class="text-xl font-semibold text-gray-800">Origin (EA)</h2>
-                    </div>
-                    <div class="platform-stats text-sm text-gray-600">
-                        <span class="platform-success font-semibold">0</span> / <span class="platform-total">0</span>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="origin-domains">
-                    <!-- Origin 域名将通过 TypeScript 动态加载 -->
-                </div>
-            </div>
-
-            <!-- Uplay 平台 -->
-            <div class="platform-card" data-platform="uplay">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center">
-                        <i class="fas fa-chess-rook text-2xl text-blue-800 mr-3"></i>
-                        <h2 class="text-xl font-semibold text-gray-800">Ubisoft Connect</h2>
-                    </div>
-                    <div class="platform-stats text-sm text-gray-600">
-                        <span class="platform-success font-semibold">0</span> / <span class="platform-total">0</span>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="uplay-domains">
-                    <!-- Uplay 域名将通过 TypeScript 动态加载 -->
-                </div>
-            </div>
-
-            <!-- Battle.net 平台 -->
-            <div class="platform-card" data-platform="battle.net">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center">
-                        <i class="fas fa-sword text-2xl text-indigo-600 mr-3"></i>
-                        <h2 class="text-xl font-semibold text-gray-800">Battle.net</h2>
-                    </div>
-                    <div class="platform-stats text-sm text-gray-600">
-                        <span class="platform-success font-semibold">0</span> / <span class="platform-total">0</span>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="battle.net-domains">
-                    <!-- Battle.net 域名将通过 TypeScript 动态加载 -->
-                </div>
-            </div>
-
-            <!-- GOG 平台 -->
-            <div class="platform-card" data-platform="gog">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center">
-                        <i class="fas fa-university text-2xl text-green-600 mr-3"></i>
-                        <h2 class="text-xl font-semibold text-gray-800">GOG</h2>
-                    </div>
-                    <div class="platform-stats text-sm text-gray-600">
-                        <span class="platform-success font-semibold">0</span> / <span class="platform-total">0</span>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="gog-domains">
-                    <!-- GOG 域名将通过 TypeScript 动态加载 -->
-                </div>
-            </div>
-
-            <!-- Rockstar 平台 -->
-            <div class="platform-card" data-platform="rockstar">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center">
-                        <i class="fas fa-star text-2xl text-yellow-600 mr-3"></i>
-                        <h2 class="text-xl font-semibold text-gray-800">Rockstar Games</h2>
-                    </div>
-                    <div class="platform-stats text-sm text-gray-600">
-                        <span class="platform-success font-semibold">0</span> / <span class="platform-total">0</span>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="rockstar-domains">
-                    <!-- Rockstar 域名将通过 TypeScript 动态加载 -->
-                </div>
-            </div>
+        <div class="space-y-8" id="platforms-container">
+            <!-- Platforms will be dynamically loaded here -->
         </div>
 
         <!-- Footer -->
