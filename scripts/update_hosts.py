@@ -104,7 +104,7 @@ def generate_hosts_content(ip_dict):
     # 添加更新信息
     now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S+08:00')
     content += f"\n# Update time: {now}\n"
-    content += "# Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts\n"
+    content += "# Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts\n"
     content += "# Star me: https://github.com/artemisia1107/GameLove\n"
     content += "# GameLove Host End\n"
     
@@ -145,8 +145,8 @@ def generate_json_data(ip_dict, failed_domains):
         'all_hosts': ip_dict,
         'failed_domains': failed_domains,
         'urls': {
-            'hosts_file': 'https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts',
-        'json_api': 'https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts.json',
+            'hosts_file': 'https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts',
+        'json_api': 'https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts.json',
         'repository': 'https://github.com/artemisia1107/GameLove'
         }
     }

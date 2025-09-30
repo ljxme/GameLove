@@ -21,8 +21,8 @@
 
 下面的地址无需访问 GitHub 即可获取到最新的 hosts 内容：
 
-- **文件：** `https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts`
-- **JSON：** `https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts.json`
+- **文件：** `https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts`
+- **JSON：** `https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts.json`
 
 ### 2.1 手动方式
 
@@ -57,7 +57,7 @@
 34.232.194.187                 unrealengine.com
 34.249.82.244                  uplay.com
 # Update time: 2025-09-30T03:09:38+08:00
-# Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts
+# Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts
 # Star me: https://github.com/artemisia1107/GameLove
 # GameLove Host End
 ```
@@ -71,13 +71,13 @@ git-bash.exe fetch_gamelove_hosts.sh
 
 #### Linux/Mac
 ```bash
-sudo curl -o /etc/hosts https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts
+sudo curl -o /etc/hosts https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts
 ```
 
 或者使用脚本：
 ```bash
 #!/bin/bash
-remote=https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts
+remote=https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts
 hosts=/etc/hosts
 backup=/etc/hosts.backup.$(date +%Y%m%d_%H%M%S)
 
@@ -110,13 +110,13 @@ echo "备份文件：$backup"
 
 如果你只想优化特定平台，可以使用平台专用的 hosts 文件：
 
-- **Steam：** `https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts/hosts_steam`
-- **Epic Games：** `https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts/hosts_epic`
-- **Origin：** `https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts/hosts_origin`
-- **Uplay：** `https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts/hosts_uplay`
-- **Battle.net：** `https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts/hosts_battlenet`
-- **GOG：** `https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts/hosts_gog`
-- **Rockstar：** `https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts/hosts_rockstar`
+- **Steam：** `https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/scripts/hosts/hosts_steam`
+- **Epic Games：** `https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/scripts/hosts/hosts_epic`
+- **Origin：** `https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/scripts/hosts/hosts_origin`
+- **Uplay：** `https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/scripts/hosts/hosts_uplay`
+- **Battle.net：** `https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/scripts/hosts/hosts_battle.net`
+- **GOG：** `https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/scripts/hosts/hosts_gog`
+- **Rockstar：** `https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/scripts/hosts/hosts_rockstar`
 
 ## 五、自动更新
 
