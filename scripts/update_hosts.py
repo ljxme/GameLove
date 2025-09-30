@@ -181,6 +181,93 @@ def save_json_file(data, filename, is_root=False):
         json.dump(data, f, ensure_ascii=False, indent=2)
     return filepath
 
+def update_readme_hosts_content(hosts_content):
+    """更新README.md中的hosts内容"""
+    readme_path = os.path.join('..', 'README.md')
+    
+    # 读取README.md文件
+    try:
+        with open(readme_path, 'r', encoding='utf-8') as f:
+            readme_content = f.read()
+    except FileNotFoundError:
+        print("README.md文件未找到")
+        return False
+    
+    # 查找hosts内容的开始和结束标记
+    start_marker = "```\n# GameLove Host Start"
+    end_marker = "# GameLove Host End\n```"
+    
+    start_index = readme_content.find(start_marker)
+    end_index = readme_content.find(end_marker)
+    
+    if start_index == -1 or end_index == -1:
+        print("在README.md中未找到hosts内容标记")
+        return False
+    
+    # 构建新的hosts内容块
+    # 移除hosts_content中的开头和结尾标记，因为README中需要包装在代码块中
+    hosts_lines = hosts_content.split('\n')
+    # 移除第一行的"# GameLove Host Start"和最后一行的"# GameLove Host End"
+    if hosts_lines[0].strip() == "# GameLove Host Start":
+        hosts_lines = hosts_lines[1:]
+    if hosts_lines and hosts_lines[-1].strip() == "# GameLove Host End":
+        hosts_lines = hosts_lines[:-1]
+    
+    # 移除空行和多余的标记
+    clean_lines = []
+    for line in hosts_lines:
+        line = line.strip()
+        if line and line != "# GameLove Host Start" and line != "# GameLove Host End":
+            clean_lines.append(line)
+    
+    # 重新构建hosts内容
+    clean_hosts_content = '\n'.join(clean_lines)
+    
+    # 获取更新时间
+    now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S+08:00')
+    
+    new_hosts_block = f"""```
+# GameLove Host Start
+{clean_hosts_content}
+# GameLove Host End
+```
+
+该内容会自动定时更新，数据更新时间：{now}"""
+    
+    # 替换README中的hosts内容
+    # 找到完整的替换范围，包括后面的更新时间说明
+    end_index_with_time = readme_content.find("```", end_index + len(end_marker))
+    if end_index_with_time != -1:
+        # 查找更新时间说明的结束位置
+        time_line_start = readme_content.find("该内容会自动定时更新", end_index_with_time)
+        if time_line_start != -1:
+            time_line_end = readme_content.find("\n", time_line_start)
+            if time_line_end != -1:
+                end_index = time_line_end
+            else:
+                end_index = len(readme_content)
+        else:
+            end_index = end_index_with_time + 3  # 包含```
+    else:
+        end_index = end_index + len(end_marker)
+    
+    # 构建新的README内容
+    new_readme_content = (
+        readme_content[:start_index] + 
+        new_hosts_block + 
+        readme_content[end_index:]
+    )
+    
+    # 写入更新后的README.md
+    try:
+        with open(readme_path, 'w', encoding='utf-8') as f:
+            f.write(new_readme_content)
+        print(f"README.md已更新，更新时间：{now}")
+        return True
+    except Exception as e:
+        print(f"更新README.md时出错：{e}")
+        return False
+
 def main():
     print("🎮 GameLove - 游戏平台网络优化工具")
     print("参考 GitHub520 设计，让你\"爱\"上游戏！")
@@ -242,6 +329,13 @@ def main():
                 platform_content = generate_hosts_content(platform_ips)
                 platform_file = save_hosts_file(platform_content, f'hosts_{platform.lower()}')
                 print(f"✓ 已保存到: {platform_file}")
+        
+        # 更新README.md中的hosts内容
+        print("\n📝 更新README.md中的hosts内容...")
+        if update_readme_hosts_content(hosts_content):
+            print("✓ README.md已成功更新")
+        else:
+            print("✗ README.md更新失败")
     
     print(f"\n🎉 hosts文件生成完成！")
     print(f"📁 主文件位置: 根目录 (hosts, hosts.json)")

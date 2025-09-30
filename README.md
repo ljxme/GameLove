@@ -30,87 +30,80 @@
 
 ```
 # GameLove Host Start
-140.82.114.26                 steamcommunity.com
-185.199.108.133               store.steampowered.com
-140.82.114.22                 api.steampowered.com
-185.199.108.133               help.steampowered.com
-185.199.108.133               steamcdn-a.akamaihd.net
-185.199.108.133               steamuserimages-a.akamaihd.net
-185.199.108.133               steamstore-a.akamaihd.net
-20.205.243.168                launcher-public-service-prod06.ol.epicgames.com
-140.82.114.26                 epicgames.com
-185.199.108.133               unrealengine.com
-140.82.114.22                 fortnite.com
-185.199.108.133               easyanticheat.net
-140.82.114.26                 origin.com
-185.199.108.133               ea.com
-185.199.108.133               eaassets-a.akamaihd.net
-185.199.108.133               ssl-lvlt.cdn.ea.com
-140.82.114.26                 ubisoft.com
-185.199.108.133               ubi.com
-140.82.114.22                 uplay.com
-185.199.108.133               static3.cdn.ubi.com
-140.82.114.26                 battle.net
-185.199.108.133               blizzard.com
-140.82.114.22                 battlenet.com.cn
-185.199.108.133               blzstatic.cn
-140.82.114.26                 gog.com
-185.199.108.133               gog-statics.com
-140.82.114.22                 gogalaxy.com
-140.82.114.26                 rockstargames.com
-185.199.108.133               socialclub.rockstargames.com
-
-# Update time: 2024-01-15T18:00:00+08:00
+23.197.130.99                  api.steampowered.com
+99.83.192.184                  battle.net
+120.55.44.14                   battlenet.com.cn
+166.117.103.183                blizzard.com
+23.55.98.144                   ea.com
+23.55.179.137                  eaassets-a.akamaihd.net
+104.18.2.180                   easyanticheat.net
+75.101.241.48                  epicgames.com
+35.169.179.193                 fortnite.com
+151.101.193.55                 gog.com
+77.79.249.114                  gogalaxy.com
+23.197.130.99                  help.steampowered.com
+43.159.5.170                   launcher-public-service-prod06.ol.epicgames.com
+23.45.97.174                   origin.com
+23.196.126.23                  rockstargames.com
+104.255.105.71                 socialclub.rockstargames.com
+23.206.177.100                 static3.cdn.ubi.com
+23.200.147.167                 steamcdn-a.akamaihd.net
+128.121.146.101                steamcommunity.com
+23.55.179.199                  steamstore-a.akamaihd.net
+23.55.179.204                  steamuserimages-a.akamaihd.net
+23.192.17.221                  store.steampowered.com
+52.70.215.58                   ubi.com
+18.244.214.54                  ubisoft.com
+18.210.9.75                    unrealengine.com
+52.31.3.176                    uplay.com
+# Update time: 2025-09-30T10:39:54+08:00
 # Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts
 # Star me: https://github.com/artemisia1107/GameLove
 # GameLove Host End
 ```
 
-该内容会自动定时更新，数据更新时间：2024-01-15T18:00:00+08:00
+该内容会自动定时更新，数据更新时间：2025-09-30T10:39:54+08:00
 
-#### 2.1.2 修改 hosts 文件
-
+### 2.1.2 修改 hosts 文件
 hosts 文件在每个系统的位置不一，详情如下：
 
-- **Windows 系统：** `C:\Windows\System32\drivers\etc\hosts`
-- **Linux 系统：** `/etc/hosts`
-- **Mac（苹果电脑）系统：** `/etc/hosts`
-- **Android（安卓）系统：** `/system/etc/hosts`
-- **iPhone（iOS）系统：** `/etc/hosts`
+- **Windows 系统**：`C:\Windows\System32\drivers\etc\hosts`
+- **Linux 系统**：`/etc/hosts`
+- **Mac（苹果电脑）系统**：`/etc/hosts`
+- **Android（安卓）系统**：`/system/etc/hosts`
+- **iPhone（iOS）系统**：`/etc/hosts`
 
 修改方法，把第一步的内容复制到文本末尾：
 
-1. **Windows** 使用记事本。
-2. **Linux、Mac** 使用 Root 权限：`sudo vi /etc/hosts`。
-3. **iPhone、iPad** 须越狱、**Android** 必须要 root。
+- **Windows** 使用记事本。
+- **Linux、Mac** 使用 Root 权限：`sudo vi /etc/hosts`。
+- **iPhone、iPad** 须越狱、**Android** 必须要 root。
 
-#### 2.1.3 激活生效
-
+### 2.1.3 激活生效
 大部分情况下是直接生效，如未生效可尝试下面的办法，刷新 DNS：
 
-- **Windows：** 在 CMD 窗口输入：`ipconfig /flushdns`
+- **Windows**：在 CMD 窗口输入：`ipconfig /flushdns`
 - **Linux** 命令：`sudo nscd restart`，如报错则须安装：`sudo apt install nscd` 或 `sudo /etc/init.d/nscd restart`
 - **Mac** 命令：`sudo killall -HUP mDNSResponder`
 
-**Tips：** 上述方法无效可以尝试重启机器。
+**Tips**：上述方法无效可以尝试重启机器。
 
-### 2.2 自动方式（SwitchHosts）
-
-**Tip：** 推荐 [SwitchHosts](https://github.com/oldj/SwitchHosts) 工具管理 hosts
+## 2.2 自动方式（SwitchHosts）
+**Tip**：推荐 SwitchHosts 工具管理 hosts
 
 以 SwitchHosts 为例，看一下怎么使用的，配置参考下面：
 
-- **Hosts 类型:** Remote
-- **Hosts 标题:** GameLove（随意）
-- **URL:** `https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts`
-- **自动刷新:** 最好选 1 小时
+- **Hosts 类型**: Remote
+- **Hosts 标题**: GameLove（随意）
+- **URL**: `https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts`
+- **自动刷新**: 最好选 1 小时
 
 这样每次 hosts 有更新都能及时进行更新，免去手动更新。
 
-### 2.3 一行命令
+## 2.3 一行命令
 
-#### Windows
-使用命令需要安装 [git bash](https://git-scm.com/download/win)
+### Windows
+使用命令需要安装 git bash
 
 复制以下命令保存到本地命名为 `fetch_gamelove_hosts.sh`：
 
