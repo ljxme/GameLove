@@ -1,0 +1,30 @@
+{
+  "name": "gamelove-hosts-checker",
+  "version": "1.0.0",
+  "description": "GameLove Hosts连通性检测工具",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "build-css": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.5",
+    "typescript": "^5.2.2",
+    "vite": "^4.5.0"
+  },
+  "dependencies": {},
+  "keywords": [
+    "hosts",
+    "gaming",
+    "connectivity",
+    "typescript",
+    "tailwindcss"
+  ],
+  "author": "GameLove",
+  "license": "MIT"
+}
