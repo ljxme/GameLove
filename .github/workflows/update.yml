@@ -15,6 +15,9 @@ on:
 jobs:
   update-hosts:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
     
     steps:
     - name: 检出代码
@@ -57,14 +60,17 @@ jobs:
         git commit -m "🎮 自动更新 GameLove hosts 文件 - $(date '+%Y-%m-%d %H:%M:%S')"
         git push
     
+    - name: 获取当前时间
+      id: date
+      if: steps.check_changes.outputs.has_changes == 'true' || github.event.inputs.force_update == 'true'
+      run: echo "date=$(date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_OUTPUT
+
     - name: 创建发布版本
       if: steps.check_changes.outputs.has_changes == 'true' || github.event.inputs.force_update == 'true'
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ github.run_number }}
-        release_name: GameLove Hosts v${{ github.run_number }}
+        name: GameLove Hosts v${{ github.run_number }}
         body: |
           🎮 GameLove 游戏平台网络优化 - 自动更新
           
@@ -98,7 +104,3 @@ jobs:
           让你"爱"上游戏，解决访问慢、连接超时的问题！
         draft: false
         prerelease: false
-    
-    - name: 获取当前时间
-      id: date
-      run: echo "date=$(date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_OUTPUT
