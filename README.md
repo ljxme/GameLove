@@ -30,42 +30,39 @@
 
 ```
 # GameLove Host Start
-23.214.233.226                 api.steampowered.com
+23.210.138.105                 api.steampowered.com
 166.117.214.166                battle.net
 120.55.44.14                   battlenet.com.cn
-166.117.214.166                blizzard.com
-23.220.130.177                 ea.com
-23.205.106.143                 eaassets-a.akamaihd.net
-104.18.3.180                   easyanticheat.net
-34.192.41.153                  epicgames.com
-34.192.41.153                  fortnite.com
-151.101.65.55                  gog.com
-77.79.249.114                  gogalaxy.com
-23.214.233.226                 help.steampowered.com
-104.18.13.27                   launcher-public-service-prod06.ol.epicgames.com
-23.213.79.115                  origin.com
+166.117.114.163                blizzard.com
+184.31.100.194                 ea.com
+23.32.45.25                    eaassets-a.akamaihd.net
+104.18.2.180                   easyanticheat.net
+35.169.179.193                 epicgames.com
+75.101.241.48                  fortnite.com
+151.101.193.55                 gog.com
+77.79.249.112                  gogalaxy.com
+23.210.138.105                 help.steampowered.com
+104.18.12.27                   launcher-public-service-prod06.ol.epicgames.com
+23.61.23.194                   origin.com
 23.9.157.24                    rockstargames.com
 104.255.105.71                 socialclub.rockstargames.com
-23.222.201.62                  static3.cdn.ubi.com
-23.215.0.136                   steamcdn-a.akamaihd.net
-23.214.233.226                 steamcommunity.com
-23.55.176.236                  steamstore-a.akamaihd.net
-23.205.104.4                   steamuserimages-a.akamaihd.net
-23.202.153.171                 store.steampowered.com
-44.209.50.162                  ubi.com
-3.168.102.114                  ubisoft.com
-34.232.194.187                 unrealengine.com
+23.54.41.64                    static3.cdn.ubi.com
+23.54.76.44                    steamcdn-a.akamaihd.net
+23.210.138.105                 steamcommunity.com
+23.32.45.36                    steamstore-a.akamaihd.net
+23.32.45.35                    steamuserimages-a.akamaihd.net
+23.78.8.100                    store.steampowered.com
+3.95.49.241                    ubi.com
+3.168.102.81                   ubisoft.com
+3.227.133.49                   unrealengine.com
 34.249.82.244                  uplay.com
-# Update time: 2025-09-30T03:09:38+08:00
+# Update time: 2025-09-30T04:28:09+08:00
 # Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts
 # Star me: https://github.com/artemisia1107/GameLove
 # GameLove Host End
 ```
 
-该内容会自动定时更新，数据更新时间：2025-09-30T03:09:38+08:00
-
-在 CMD 中执行以下命令：
-```cmd
+该内容会自动定时更新，数据更新时间：2025-09-30T04:28:09+08:00cmd
 git-bash.exe fetch_gamelove_hosts.sh
 ```
 
