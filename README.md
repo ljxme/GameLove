@@ -30,84 +30,39 @@
 
 ```
 # GameLove Host Start
-23.197.130.99                  api.steampowered.com
-99.83.192.184                  battle.net
-120.55.44.14                   battlenet.com.cn
-166.117.103.183                blizzard.com
-23.55.98.144                   ea.com
-23.55.179.137                  eaassets-a.akamaihd.net
-104.18.2.180                   easyanticheat.net
-75.101.241.48                  epicgames.com
-35.169.179.193                 fortnite.com
-151.101.193.55                 gog.com
-77.79.249.114                  gogalaxy.com
-23.197.130.99                  help.steampowered.com
-43.159.5.170                   launcher-public-service-prod06.ol.epicgames.com
-23.45.97.174                   origin.com
-23.196.126.23                  rockstargames.com
+23.11.10.111                   api.steampowered.com
+166.117.214.166                battle.net
+118.31.67.128                  battlenet.com.cn
+166.117.214.166                blizzard.com
+23.11.226.172                  ea.com
+23.32.45.37                    eaassets-a.akamaihd.net
+104.18.3.180                   easyanticheat.net
+35.169.179.193                 epicgames.com
+34.192.41.153                  fortnite.com
+151.101.1.55                   gog.com
+77.79.249.112                  gogalaxy.com
+23.60.136.72                   help.steampowered.com
+104.18.12.27                   launcher-public-service-prod06.ol.epicgames.com
+23.202.7.141                   origin.com
+72.247.207.77                  rockstargames.com
 104.255.105.71                 socialclub.rockstargames.com
-23.206.177.100                 static3.cdn.ubi.com
-23.200.147.167                 steamcdn-a.akamaihd.net
-128.121.146.101                steamcommunity.com
-23.55.179.199                  steamstore-a.akamaihd.net
-23.55.179.204                  steamuserimages-a.akamaihd.net
-23.192.17.221                  store.steampowered.com
-52.70.215.58                   ubi.com
-18.244.214.54                  ubisoft.com
-18.210.9.75                    unrealengine.com
-52.31.3.176                    uplay.com
-# Update time: 2025-09-30T10:39:54+08:00
+23.199.49.20                   static3.cdn.ubi.com
+23.54.78.13                    steamcdn-a.akamaihd.net
+23.11.10.111                   steamcommunity.com
+23.59.169.141                  steamstore-a.akamaihd.net
+23.39.51.241                   steamuserimages-a.akamaihd.net
+104.119.185.115                store.steampowered.com
+44.213.175.150                 ubi.com
+3.168.102.81                   ubisoft.com
+34.232.194.187                 unrealengine.com
+34.249.82.244                  uplay.com
+# Update time: 2025-09-30T03:01:43+08:00
 # Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts
 # Star me: https://github.com/artemisia1107/GameLove
 # GameLove Host End
 ```
 
-该内容会自动定时更新，数据更新时间：2025-09-30T10:39:54+08:00
-
-### 2.1.2 修改 hosts 文件
-hosts 文件在每个系统的位置不一，详情如下：
-
-- **Windows 系统**：`C:\Windows\System32\drivers\etc\hosts`
-- **Linux 系统**：`/etc/hosts`
-- **Mac（苹果电脑）系统**：`/etc/hosts`
-- **Android（安卓）系统**：`/system/etc/hosts`
-- **iPhone（iOS）系统**：`/etc/hosts`
-
-修改方法，把第一步的内容复制到文本末尾：
-
-- **Windows** 使用记事本。
-- **Linux、Mac** 使用 Root 权限：`sudo vi /etc/hosts`。
-- **iPhone、iPad** 须越狱、**Android** 必须要 root。
-
-### 2.1.3 激活生效
-大部分情况下是直接生效，如未生效可尝试下面的办法，刷新 DNS：
-
-- **Windows**：在 CMD 窗口输入：`ipconfig /flushdns`
-- **Linux** 命令：`sudo nscd restart`，如报错则须安装：`sudo apt install nscd` 或 `sudo /etc/init.d/nscd restart`
-- **Mac** 命令：`sudo killall -HUP mDNSResponder`
-
-**Tips**：上述方法无效可以尝试重启机器。
-
-## 2.2 自动方式（SwitchHosts）
-**Tip**：推荐 SwitchHosts 工具管理 hosts
-
-以 SwitchHosts 为例，看一下怎么使用的，配置参考下面：
-
-- **Hosts 类型**: Remote
-- **Hosts 标题**: GameLove（随意）
-- **URL**: `https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts`
-- **自动刷新**: 最好选 1 小时
-
-这样每次 hosts 有更新都能及时进行更新，免去手动更新。
-
-## 2.3 一行命令
-
-### Windows
-使用命令需要安装 git bash
-
-复制以下命令保存到本地命名为 `fetch_gamelove_hosts.sh`：
-
-```bash
+该内容会自动定时更新，数据更新时间：2025-09-30T03:01:43+08:00bash
 #!/bin/bash
 _hosts=$(mktemp /tmp/hostsXXX)
 hosts=/c/Windows/System32/drivers/etc/hosts
