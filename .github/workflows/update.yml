@@ -80,6 +80,7 @@ jobs:
           
           📅 更新时间: ${{ steps.date.outputs.date }}
           🔄 更新方式: 自动更新
+          ⚠️ 注意: 只保留最近10次更新，旧版本会自动清理
           
           ## 📥 快速使用
           
@@ -108,3 +109,33 @@ jobs:
           让你"爱"上游戏，解决访问慢、连接超时的问题！
         draft: false
         prerelease: false
+
+    - name: 清理旧版本
+      if: steps.check_changes.outputs.has_changes == 'true' || github.event.inputs.force_update == 'true'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # 获取所有以 GameLove-Hosts- 开头的发布版本，按创建时间排序
+        releases=$(gh release list --repo ${{ github.repository }} --limit 100 --json tagName,createdAt | \
+          jq -r '.[] | select(.tagName | startswith("GameLove-Hosts-")) | .tagName' | \
+          head -n 100)
+        
+        # 计算需要删除的版本数量
+        total_count=$(echo "$releases" | wc -l)
+        keep_count=10
+        
+        if [ $total_count -gt $keep_count ]; then
+          delete_count=$((total_count - keep_count))
+          echo "总共有 $total_count 个版本，保留最新 $keep_count 个，删除最旧 $delete_count 个"
+          
+          # 获取需要删除的版本（最旧的几个）
+          old_releases=$(echo "$releases" | tail -n $delete_count)
+          
+          # 删除旧版本
+          for tag in $old_releases; do
+            echo "删除版本: $tag"
+            gh release delete "$tag" --repo ${{ github.repository }} --yes || echo "删除 $tag 失败，可能已被删除"
+          done
+        else
+          echo "当前版本数量: $total_count，无需清理"
+        fi
