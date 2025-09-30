@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   root: '.',
+  base: mode === 'production' ? '/GameLove/' : '/',
   build: {
     outDir: 'dist',
     rollupOptions: {
@@ -14,4 +15,4 @@ export default defineConfig({
     port: 3000,
     open: true
   }
-})
+}))
