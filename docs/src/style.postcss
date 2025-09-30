@@ -44,4 +44,120 @@
   .domain-item {
     @apply flex items-center justify-between p-3 rounded-lg border transition-all duration-200 hover:shadow-md;
   }
+  
+  /* 测试状态动画 */
+  .testing-active {
+    @apply relative;
+  }
+  
+  .testing-active::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 rounded-xl;
+    animation: shimmer 2s infinite;
+  }
+  
+  /* 进度条动画 */
+  .progress-bar {
+    @apply transition-all duration-500 ease-out;
+  }
+  
+  /* 状态指示器脉冲动画 */
+  .status-indicator {
+    @apply relative;
+  }
+  
+  .status-indicator.testing::after {
+    content: '';
+    @apply absolute inset-0 rounded-full bg-blue-500/30;
+    animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  
+  /* 按钮悬停效果 */
+  .btn-hover-effect {
+    @apply transition-all duration-200 transform hover:scale-105 hover:shadow-lg active:scale-95;
+  }
+  
+  /* 卡片悬停效果 */
+  .card-hover {
+    @apply transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl;
+  }
+  
+  /* 成功率颜色渐变 */
+  .success-rate-excellent {
+    @apply text-green-600 font-bold;
+  }
+  
+  .success-rate-good {
+    @apply text-yellow-600 font-bold;
+  }
+  
+  .success-rate-poor {
+    @apply text-red-600 font-bold;
+  }
+}
+
+/* 自定义动画 */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-2px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(2px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* 测试模式样式 */
+.testing-mode {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.testing-mode .controls-container {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+/* 响应式动画 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

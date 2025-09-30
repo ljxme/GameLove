@@ -37,6 +37,10 @@ interface Statistics {
     warning: number;
     error: number;
     testing: number;
+    pending: number;
+    successRate: number;
+    averageResponseTime: number;
+    lastUpdateTime: Date | null;
 }
 
 // 定义检测配置接口
@@ -60,7 +64,11 @@ class HostsConnectivityChecker {
         success: 0,
         warning: 0,
         error: 0,
-        testing: 0
+        testing: 0,
+        pending: 0,
+        successRate: 0,
+        averageResponseTime: 0,
+        lastUpdateTime: null
     };
     private isTestingAll: boolean = false;
     private abortController: AbortController | null = null;
@@ -136,6 +144,16 @@ class HostsConnectivityChecker {
         if (this.isTestingAll) {
             this.stopAllTests();
         } else {
+            // 显示确认对话框（如果有正在进行的测试）
+            const hasOngoingTests = Array.from(this.platforms.values()).some(platform =>
+                platform.domains.some(domain => domain.status === ConnectivityStatus.TESTING)
+            );
+            
+            if (hasOngoingTests) {
+                const confirmed = confirm('检测到有正在进行的测试，是否要重新开始全部测试？');
+                if (!confirmed) return;
+            }
+            
             await this.testAllDomains();
         }
     }
@@ -291,23 +309,77 @@ class HostsConnectivityChecker {
      */
     private createPlatformElement(platform: PlatformInfo): HTMLElement {
         const platformDiv = document.createElement('div');
-        platformDiv.className = 'bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300';
+        platformDiv.className = 'bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02]';
         
         const successCount = platform.domains.filter(d => d.status === ConnectivityStatus.SUCCESS).length;
         const totalCount = platform.domains.length;
         const testingCount = platform.domains.filter(d => d.status === ConnectivityStatus.TESTING).length;
+        const errorCount = platform.domains.filter(d => d.status === ConnectivityStatus.ERROR).length;
+        const warningCount = platform.domains.filter(d => d.status === ConnectivityStatus.WARNING).length;
+        
+        // 计算成功率
+        const successRate = totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 0;
+        
+        // 确定平台状态颜色
+        let statusColor = 'text-gray-500';
+        let statusBg = 'bg-gray-100';
+        if (testingCount > 0) {
+            statusColor = 'text-blue-600';
+            statusBg = 'bg-blue-100';
+        } else if (successRate >= 80) {
+            statusColor = 'text-green-600';
+            statusBg = 'bg-green-100';
+        } else if (successRate >= 50) {
+            statusColor = 'text-yellow-600';
+            statusBg = 'bg-yellow-100';
+        } else if (successCount > 0) {
+            statusColor = 'text-orange-600';
+            statusBg = 'bg-orange-100';
+        } else if (errorCount > 0) {
+            statusColor = 'text-red-600';
+            statusBg = 'bg-red-100';
+        }
         
         platformDiv.innerHTML = `
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center">
-                    <i class="${platform.icon} ${platform.color} text-2xl mr-3"></i>
+                    <div class="relative">
+                        <i class="${platform.icon} ${platform.color} text-2xl mr-3 transition-transform duration-300 hover:scale-110"></i>
+                        ${testingCount > 0 ? '<div class="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>' : ''}
+                    </div>
                     <h3 class="text-xl font-semibold text-gray-800">${platform.name}</h3>
                 </div>
-                <div class="text-sm text-gray-600">
-                    ${successCount}/${totalCount} 可用
-                    ${testingCount > 0 ? `<span class="text-blue-500">(${testingCount} 检测中)</span>` : ''}
+                <div class="flex items-center gap-3">
+                    <div class="text-sm ${statusColor} font-medium">
+                        ${successCount}/${totalCount} 可用
+                        ${successRate > 0 ? `(${successRate}%)` : ''}
+                    </div>
+                    <div class="px-3 py-1 rounded-full text-xs font-medium ${statusBg} ${statusColor}">
+                        ${testingCount > 0 ? `检测中 ${testingCount}` : 
+                          successRate >= 80 ? '优秀' :
+                          successRate >= 50 ? '良好' :
+                          successCount > 0 ? '一般' :
+                          errorCount > 0 ? '异常' : '未知'}
+                    </div>
                 </div>
             </div>
+            
+            <!-- 平台进度条 -->
+            <div class="mb-4">
+                <div class="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>连接状态</span>
+                    <span>${successCount + errorCount + warningCount}/${totalCount} 已检测</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div class="h-full flex">
+                        <div class="bg-green-500 transition-all duration-500" style="width: ${(successCount / totalCount) * 100}%"></div>
+                        <div class="bg-yellow-500 transition-all duration-500" style="width: ${(warningCount / totalCount) * 100}%"></div>
+                        <div class="bg-red-500 transition-all duration-500" style="width: ${(errorCount / totalCount) * 100}%"></div>
+                        <div class="bg-blue-500 animate-pulse transition-all duration-500" style="width: ${(testingCount / totalCount) * 100}%"></div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="space-y-2">
                 ${platform.domains.map(domain => this.createDomainElement(domain).outerHTML).join('')}
             </div>
@@ -321,28 +393,73 @@ class HostsConnectivityChecker {
      */
     private createDomainElement(domainInfo: DomainInfo): HTMLElement {
         const domainDiv = document.createElement('div');
-        domainDiv.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200';
+        
+        // 根据状态设置不同的样式
+        let statusClass = 'bg-gray-50 border-l-4 border-gray-300';
+        let statusBadge = '';
+        
+        switch (domainInfo.status) {
+            case ConnectivityStatus.SUCCESS:
+                statusClass = 'bg-green-50 border-l-4 border-green-400';
+                statusBadge = '<span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">正常</span>';
+                break;
+            case ConnectivityStatus.WARNING:
+                statusClass = 'bg-yellow-50 border-l-4 border-yellow-400';
+                statusBadge = '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-medium">警告</span>';
+                break;
+            case ConnectivityStatus.ERROR:
+                statusClass = 'bg-red-50 border-l-4 border-red-400';
+                statusBadge = '<span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full font-medium">异常</span>';
+                break;
+            case ConnectivityStatus.TESTING:
+                statusClass = 'bg-blue-50 border-l-4 border-blue-400 animate-pulse';
+                statusBadge = '<span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium animate-pulse">检测中</span>';
+                break;
+            default:
+                statusClass = 'bg-gray-50 border-l-4 border-gray-300';
+                statusBadge = '<span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">未知</span>';
+        }
+        
+        domainDiv.className = `flex items-center justify-between p-3 ${statusClass} rounded-lg hover:shadow-md transition-all duration-200 transform hover:scale-[1.01]`;
         
         const statusIcon = this.getStatusIcon(domainInfo.status);
         const responseTimeText = domainInfo.responseTime ? `${domainInfo.responseTime}ms` : '';
         const lastCheckedText = domainInfo.lastChecked ? 
             `最后检测: ${domainInfo.lastChecked.toLocaleTimeString()}` : '';
         
+        // 响应时间颜色
+        let responseTimeColor = 'text-gray-600';
+        if (domainInfo.responseTime) {
+            if (domainInfo.responseTime < 200) {
+                responseTimeColor = 'text-green-600';
+            } else if (domainInfo.responseTime < 500) {
+                responseTimeColor = 'text-yellow-600';
+            } else {
+                responseTimeColor = 'text-red-600';
+            }
+        }
+        
         domainDiv.innerHTML = `
-            <div class="flex items-center">
-                <span class="mr-3">${statusIcon}</span>
-                <div>
-                    <span class="font-medium text-gray-800">${domainInfo.domain}</span>
-                    ${domainInfo.errorMessage ? `<div class="text-xs text-red-500">${domainInfo.errorMessage}</div>` : ''}
-                    ${lastCheckedText ? `<div class="text-xs text-gray-500">${lastCheckedText}</div>` : ''}
+            <div class="flex items-center flex-1">
+                <span class="mr-3 text-lg">${statusIcon}</span>
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="font-medium text-gray-800">${domainInfo.domain}</span>
+                        ${statusBadge}
+                    </div>
+                    <div class="flex items-center gap-4 text-xs">
+                        ${domainInfo.errorMessage ? `<span class="text-red-500 flex items-center"><i class="fas fa-exclamation-triangle mr-1"></i>${domainInfo.errorMessage}</span>` : ''}
+                        ${lastCheckedText ? `<span class="text-gray-500 flex items-center"><i class="fas fa-clock mr-1"></i>${lastCheckedText}</span>` : ''}
+                        ${responseTimeText ? `<span class="${responseTimeColor} flex items-center font-medium"><i class="fas fa-tachometer-alt mr-1"></i>${responseTimeText}</span>` : ''}
+                    </div>
                 </div>
             </div>
-            <div class="flex items-center space-x-2">
-                ${responseTimeText ? `<span class="text-sm text-gray-600">${responseTimeText}</span>` : ''}
-                <button class="test-single-btn px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors duration-200" 
+            <div class="flex items-center space-x-2 ml-4">
+                <button class="test-single-btn px-3 py-1 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 font-medium shadow-sm transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" 
                         data-domain="${domainInfo.domain}" 
                         ${domainInfo.status === ConnectivityStatus.TESTING ? 'disabled' : ''}>
-                    ${domainInfo.status === ConnectivityStatus.TESTING ? '检测中...' : '测试'}
+                    <i class="fas ${domainInfo.status === ConnectivityStatus.TESTING ? 'fa-spinner fa-spin' : 'fa-play'} mr-1"></i>
+                    ${domainInfo.status === ConnectivityStatus.TESTING ? '检测中' : '测试'}
                 </button>
             </div>
         `;
@@ -385,6 +502,9 @@ class HostsConnectivityChecker {
 
         this.isTestingAll = true;
         this.abortController = new AbortController();
+        
+        // 添加全局测试开始动画
+        this.addGlobalTestStartAnimation();
         this.updateTestAllButton(true);
 
         const allDomains: DomainInfo[] = [];
@@ -393,8 +513,15 @@ class HostsConnectivityChecker {
         });
 
         try {
+            // 重置所有域名状态
+            this.resetAllDomainsStatus(allDomains);
+            
             // 使用优化的批处理策略
             await this.processDomainsBatch(allDomains);
+            
+            // 添加全局测试完成动画
+            this.addGlobalTestCompleteAnimation();
+            
         } catch (error: any) {
             if (error.name !== 'AbortError') {
                 console.error('测试过程中发生错误:', error);
@@ -405,16 +532,248 @@ class HostsConnectivityChecker {
             this.abortController = null;
             this.updateTestAllButton(false);
             this.updateLastUpdateTime();
+            this.removeGlobalTestAnimation();
             // 结束性能监控
             this.performanceMonitor.endMeasure('testAllDomains');
         }
     }
 
     /**
-     * 批处理域名测试
+     * 添加全局测试开始动画
+     */
+    private addGlobalTestStartAnimation(): void {
+        const container = document.querySelector('.controls-container');
+        if (container) {
+            container.classList.add('testing-active');
+        }
+        
+        // 添加页面级别的测试状态指示
+        document.body.classList.add('testing-mode');
+        
+        // 显示测试开始提示
+        this.showTestingToast('开始检测所有域名...', 'info');
+    }
+
+    /**
+     * 添加全局测试完成动画
+     */
+    private addGlobalTestCompleteAnimation(): void {
+        const successCount = this.statistics.success;
+        const totalCount = this.statistics.total;
+        const successRate = totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 0;
+        
+        // 显示详细的完成统计
+        this.showDetailedTestResults();
+        
+        // 添加完成动画效果
+        this.addTestCompleteVisualEffects();
+        
+        // 显示简短的完成提示
+        let message = '';
+        let type: 'success' | 'warning' | 'error' = 'success';
+        
+        if (successRate >= 80) {
+            message = `检测完成！成功率 ${successRate}% - 连接状态良好 🎉`;
+            type = 'success';
+        } else if (successRate >= 50) {
+            message = `检测完成！成功率 ${successRate}% - 部分域名异常 ⚠️`;
+            type = 'warning';
+        } else {
+            message = `检测完成！成功率 ${successRate}% - 多数域名异常 ❌`;
+            type = 'error';
+        }
+        
+        this.showTestingToast(message, type);
+        
+        // 启用结果导出功能
+        this.enableResultExport();
+    }
+
+    /**
+     * 显示详细的测试结果
+     */
+    private showDetailedTestResults(): void {
+        const { success, warning, error, total, averageResponseTime } = this.statistics;
+        const successRate = total > 0 ? Math.round((success / total) * 100) : 0;
+        
+        // 创建详细结果弹窗
+        const resultModal = this.createResultModal({
+            total,
+            success,
+            warning,
+            error,
+            successRate,
+            averageResponseTime,
+            fastestDomain: this.getFastestDomain(),
+            slowestDomain: this.getSlowestDomain(),
+            failedDomains: this.getFailedDomains()
+        });
+        
+        // 显示弹窗
+        document.body.appendChild(resultModal);
+        
+        // 3秒后自动关闭（除非用户交互）
+        setTimeout(() => {
+            if (resultModal.parentNode) {
+                resultModal.remove();
+            }
+        }, 8000);
+    }
+
+    /**
+     * 添加测试完成的视觉效果
+     */
+    private addTestCompleteVisualEffects(): void {
+        // 为成功的域名添加庆祝动画
+        const successDomains = this.getAllDomains().filter(d => d.status === ConnectivityStatus.SUCCESS);
+        successDomains.forEach((domain, index) => {
+            setTimeout(() => {
+                this.addCelebrationAnimation(domain);
+            }, index * 100);
+        });
+        
+        // 为整体界面添加完成效果
+        const container = document.querySelector('.controls-container');
+        if (container) {
+            container.classList.add('animate-pulse');
+            setTimeout(() => {
+                container.classList.remove('animate-pulse');
+            }, 1500);
+        }
+        
+        // 更新进度条为完成状态
+        const progressBar = document.getElementById('test-progress-bar');
+        if (progressBar) {
+            progressBar.style.background = 'linear-gradient(90deg, #10b981, #059669)';
+            progressBar.classList.add('animate-pulse');
+            setTimeout(() => {
+                progressBar.classList.remove('animate-pulse');
+            }, 2000);
+        }
+    }
+
+    /**
+     * 启用结果导出功能
+     */
+    private enableResultExport(): void {
+        // 检查是否已存在导出按钮
+        let exportBtn = document.getElementById('export-results-btn') as HTMLButtonElement;
+        
+        if (!exportBtn) {
+            // 创建导出按钮
+            exportBtn = document.createElement('button');
+            exportBtn.id = 'export-results-btn';
+            exportBtn.className = 'px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 shadow-lg transform hover:scale-105';
+            exportBtn.innerHTML = '📊 导出结果';
+            
+            // 添加到控制容器
+            const controlsContainer = document.querySelector('.controls-container');
+            if (controlsContainer) {
+                controlsContainer.appendChild(exportBtn);
+            }
+        }
+        
+        // 绑定导出事件
+        exportBtn.onclick = () => this.exportTestResults();
+        exportBtn.disabled = false;
+        exportBtn.style.display = 'inline-block';
+    }
+
+    /**
+     * 移除全局测试动画
+     */
+    private removeGlobalTestAnimation(): void {
+        const container = document.querySelector('.controls-container');
+        if (container) {
+            container.classList.remove('testing-active');
+        }
+        
+        document.body.classList.remove('testing-mode');
+    }
+
+    /**
+     * 重置所有域名状态
+     */
+    private resetAllDomainsStatus(domains: DomainInfo[]): void {
+        domains.forEach(domain => {
+            domain.status = ConnectivityStatus.PENDING;
+            domain.responseTime = undefined;
+            domain.errorMessage = undefined;
+        });
+        
+        // 立即更新UI显示重置状态
+        this.renderPlatforms();
+        this.updateStatistics();
+        this.updateProgressBar();
+    }
+
+    /**
+     * 显示测试状态提示
+     */
+    private showTestingToast(message: string, type: 'success' | 'warning' | 'error' | 'info'): void {
+        // 移除现有的提示
+        const existingToast = document.querySelector('.testing-toast');
+        if (existingToast) {
+            existingToast.remove();
+        }
+        
+        const toast = document.createElement('div');
+        toast.className = `testing-toast fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full`;
+        
+        let bgColor = '';
+        let textColor = '';
+        let icon = '';
+        
+        switch (type) {
+            case 'success':
+                bgColor = 'bg-green-500';
+                textColor = 'text-white';
+                icon = '<i class="fas fa-check-circle mr-2"></i>';
+                break;
+            case 'warning':
+                bgColor = 'bg-yellow-500';
+                textColor = 'text-white';
+                icon = '<i class="fas fa-exclamation-triangle mr-2"></i>';
+                break;
+            case 'error':
+                bgColor = 'bg-red-500';
+                textColor = 'text-white';
+                icon = '<i class="fas fa-times-circle mr-2"></i>';
+                break;
+            case 'info':
+                bgColor = 'bg-blue-500';
+                textColor = 'text-white';
+                icon = '<i class="fas fa-info-circle mr-2"></i>';
+                break;
+        }
+        
+        toast.className += ` ${bgColor} ${textColor}`;
+        toast.innerHTML = `${icon}${message}`;
+        
+        document.body.appendChild(toast);
+        
+        // 动画显示
+        setTimeout(() => {
+            toast.classList.remove('translate-x-full');
+        }, 100);
+        
+        // 自动隐藏
+        setTimeout(() => {
+            toast.classList.add('translate-x-full');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }, type === 'info' ? 2000 : 4000);
+    }
+
+    /**
+     * 批处理域名测试（优化版本）
      */
     private async processDomainsBatch(domains: DomainInfo[]): Promise<void> {
         const { batchSize, batchDelay } = this.config;
+        const totalBatches = Math.ceil(domains.length / batchSize);
         
         for (let i = 0; i < domains.length; i += batchSize) {
             if (this.abortController?.signal.aborted) {
@@ -422,19 +781,97 @@ class HostsConnectivityChecker {
             }
             
             const batch = domains.slice(i, i + batchSize);
+            const currentBatch = Math.floor(i / batchSize) + 1;
+            
+            // 更新批次进度提示
+            this.updateBatchProgress(currentBatch, totalBatches, batch);
+            
+            // 为当前批次的域名添加测试开始动画
+            batch.forEach(domain => {
+                domain.status = ConnectivityStatus.TESTING;
+                this.addTestStartAnimation(domain);
+            });
+            
+            // 立即更新UI显示测试状态
+            this.renderPlatforms();
+            this.updateStatistics();
+            this.updateProgressBar();
             
             // 并行处理当前批次
             await Promise.allSettled(
                 batch.map(domain => this.testDomainWithRetry(domain))
             );
             
+            // 为完成的域名添加完成动画
+            batch.forEach(domain => {
+                this.addTestCompleteAnimation(domain);
+            });
+            
             // 实时更新UI
             this.renderPlatforms();
             this.updateStatistics();
+            this.updateProgressBar();
+            
+            // 显示批次完成状态
+            this.showBatchCompleteStatus(currentBatch, totalBatches, batch);
             
             // 批次间延迟，避免过于频繁的请求
             if (i + batchSize < domains.length) {
                 await this.delay(batchDelay);
+            }
+        }
+    }
+
+    /**
+     * 更新批次进度
+     */
+    private updateBatchProgress(currentBatch: number, totalBatches: number, batch: DomainInfo[]): void {
+        const progressText = document.getElementById('test-progress-text');
+        if (progressText) {
+            progressText.textContent = `批次 ${currentBatch}/${totalBatches} - 正在检测 ${batch.map(d => d.domain).join(', ')}`;
+        }
+    }
+
+    /**
+     * 显示批次完成状态
+     */
+    private showBatchCompleteStatus(currentBatch: number, totalBatches: number, batch: DomainInfo[]): void {
+        const successCount = batch.filter(d => d.status === ConnectivityStatus.SUCCESS).length;
+        const totalCount = batch.length;
+        
+        if (currentBatch < totalBatches) {
+            // 不是最后一个批次，显示简短状态
+            const progressText = document.getElementById('test-progress-text');
+            if (progressText) {
+                progressText.textContent = `批次 ${currentBatch}/${totalBatches} 完成 - ${successCount}/${totalCount} 成功`;
+            }
+        }
+        
+        // 添加批次完成的视觉反馈
+        this.addBatchCompleteAnimation(currentBatch, totalBatches);
+    }
+
+    /**
+     * 添加批次完成动画
+     */
+    private addBatchCompleteAnimation(currentBatch: number, totalBatches: number): void {
+        const progressBar = document.getElementById('test-progress-bar');
+        if (progressBar) {
+            // 临时高亮进度条
+            progressBar.classList.add('animate-pulse');
+            setTimeout(() => {
+                progressBar.classList.remove('animate-pulse');
+            }, 500);
+        }
+        
+        // 如果是最后一个批次，添加完成特效
+        if (currentBatch === totalBatches) {
+            const container = document.querySelector('.controls-container');
+            if (container) {
+                container.classList.add('animate-bounce');
+                setTimeout(() => {
+                    container.classList.remove('animate-bounce');
+                }, 1000);
             }
         }
     }
@@ -474,12 +911,98 @@ class HostsConnectivityChecker {
     }
 
     /**
-     * 测试单个域名连通性
+     * 测试单个域名连通性（优化版本）
      */
     private async testSingleDomain(domainInfo: DomainInfo): Promise<void> {
-        await this.testDomainWithRetry(domainInfo);
-        this.renderPlatforms();
-        this.updateStatistics();
+        // 添加测试开始的视觉反馈
+        this.addTestStartAnimation(domainInfo);
+        
+        try {
+            await this.testDomainWithRetry(domainInfo);
+        } finally {
+            // 添加测试完成的视觉反馈
+            this.addTestCompleteAnimation(domainInfo);
+            
+            // 更新UI
+            this.renderPlatforms();
+            this.updateStatistics();
+            this.updateProgressBar();
+        }
+    }
+
+    /**
+     * 添加测试开始动画效果
+     */
+    private addTestStartAnimation(domainInfo: DomainInfo): void {
+        // 查找对应的域名元素
+        const domainElements = document.querySelectorAll('[data-domain]');
+        domainElements.forEach(element => {
+            if (element.getAttribute('data-domain') === domainInfo.domain) {
+                const parentElement = element.closest('.flex.items-center.justify-between');
+                if (parentElement) {
+                    // 添加测试中的动画类
+                    parentElement.classList.add('animate-pulse', 'bg-blue-50');
+                    
+                    // 添加涟漪效果
+                    this.createRippleEffect(parentElement as HTMLElement);
+                }
+            }
+        });
+    }
+
+    /**
+     * 添加测试完成动画效果
+     */
+    private addTestCompleteAnimation(domainInfo: DomainInfo): void {
+        // 查找对应的域名元素
+        const domainElements = document.querySelectorAll('[data-domain]');
+        domainElements.forEach(element => {
+            if (element.getAttribute('data-domain') === domainInfo.domain) {
+                const parentElement = element.closest('.flex.items-center.justify-between');
+                if (parentElement) {
+                    // 移除测试中的动画类
+                    parentElement.classList.remove('animate-pulse', 'bg-blue-50');
+                    
+                    // 根据结果添加完成动画
+                    let animationClass = '';
+                    switch (domainInfo.status) {
+                        case ConnectivityStatus.SUCCESS:
+                            animationClass = 'animate-bounce';
+                            break;
+                        case ConnectivityStatus.WARNING:
+                            animationClass = 'animate-pulse';
+                            break;
+                        case ConnectivityStatus.ERROR:
+                            animationClass = 'animate-shake';
+                            break;
+                    }
+                    
+                    if (animationClass) {
+                        parentElement.classList.add(animationClass);
+                        setTimeout(() => {
+                            parentElement.classList.remove(animationClass);
+                        }, 1000);
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * 创建涟漪效果
+     */
+    private createRippleEffect(element: HTMLElement): void {
+        const ripple = document.createElement('div');
+        ripple.className = 'absolute inset-0 bg-blue-400 opacity-20 rounded-lg animate-ping pointer-events-none';
+        
+        element.style.position = 'relative';
+        element.appendChild(ripple);
+        
+        setTimeout(() => {
+            if (ripple.parentNode) {
+                ripple.parentNode.removeChild(ripple);
+            }
+        }, 1000);
     }
 
     /**
@@ -683,6 +1206,17 @@ class HostsConnectivityChecker {
     }
 
     /**
+     * 获取所有域名
+     */
+    private getAllDomains(): DomainInfo[] {
+        const allDomains: DomainInfo[] = [];
+        this.platforms.forEach(platform => {
+            allDomains.push(...platform.domains);
+        });
+        return allDomains;
+    }
+
+    /**
      * 刷新状态
      */
     private refreshStatus(): void {
@@ -703,23 +1237,40 @@ class HostsConnectivityChecker {
      * 更新统计信息
      */
     private updateStatistics(): void {
+        // 重置统计数据
         this.statistics = {
             total: 0,
             success: 0,
             warning: 0,
             error: 0,
-            testing: 0
+            testing: 0,
+            pending: 0,
+            successRate: 0,
+            averageResponseTime: 0,
+            lastUpdateTime: new Date()
         };
 
+        let totalResponseTime = 0;
+        let responseTimeCount = 0;
+
+        // 统计各种状态的域名数量
         this.platforms.forEach(platform => {
             platform.domains.forEach(domain => {
                 this.statistics.total++;
                 switch (domain.status) {
                     case ConnectivityStatus.SUCCESS:
                         this.statistics.success++;
+                        if (domain.responseTime) {
+                            totalResponseTime += domain.responseTime;
+                            responseTimeCount++;
+                        }
                         break;
                     case ConnectivityStatus.WARNING:
                         this.statistics.warning++;
+                        if (domain.responseTime) {
+                            totalResponseTime += domain.responseTime;
+                            responseTimeCount++;
+                        }
                         break;
                     case ConnectivityStatus.ERROR:
                         this.statistics.error++;
@@ -727,9 +1278,27 @@ class HostsConnectivityChecker {
                     case ConnectivityStatus.TESTING:
                         this.statistics.testing++;
                         break;
+                    case ConnectivityStatus.PENDING:
+                        this.statistics.pending++;
+                        break;
                 }
             });
         });
+
+        // 计算成功率
+        if (this.statistics.total > 0) {
+            const testedCount = this.statistics.total - this.statistics.pending - this.statistics.testing;
+            if (testedCount > 0) {
+                this.statistics.successRate = Math.round(
+                    ((this.statistics.success + this.statistics.warning) / testedCount) * 100
+                );
+            }
+        }
+
+        // 计算平均响应时间
+        if (responseTimeCount > 0) {
+            this.statistics.averageResponseTime = Math.round(totalResponseTime / responseTimeCount);
+        }
 
         this.updateStatisticsUI();
         this.updatePlatformStats();
@@ -747,11 +1316,93 @@ class HostsConnectivityChecker {
             testing: document.getElementById('testing-count')
         };
 
+        // 更新基础统计数字
         Object.entries(elements).forEach(([key, element]) => {
             if (element) {
-                element.textContent = this.statistics[key as keyof Statistics].toString();
+                const value = this.statistics[key as keyof Statistics];
+                element.textContent = value?.toString() || '0';
+                
+                // 添加动画效果
+                element.classList.add('animate-pulse');
+                setTimeout(() => {
+                    element.classList.remove('animate-pulse');
+                }, 300);
             }
         });
+
+        // 更新成功率显示
+        const successRateElement = document.getElementById('success-rate');
+        if (successRateElement) {
+            successRateElement.textContent = `${this.statistics.successRate}%`;
+            
+            // 根据成功率设置颜色
+            successRateElement.className = 'font-bold text-lg';
+            if (this.statistics.successRate >= 90) {
+                successRateElement.classList.add('text-green-600');
+            } else if (this.statistics.successRate >= 70) {
+                successRateElement.classList.add('text-yellow-600');
+            } else {
+                successRateElement.classList.add('text-red-600');
+            }
+        }
+
+        // 更新平均响应时间
+        const avgResponseElement = document.getElementById('avg-response-time');
+        if (avgResponseElement) {
+            if (this.statistics.averageResponseTime > 0) {
+                avgResponseElement.textContent = `${this.statistics.averageResponseTime}ms`;
+                
+                // 根据响应时间设置颜色
+                avgResponseElement.className = 'font-bold text-lg';
+                if (this.statistics.averageResponseTime <= 1000) {
+                    avgResponseElement.classList.add('text-green-600');
+                } else if (this.statistics.averageResponseTime <= 3000) {
+                    avgResponseElement.classList.add('text-yellow-600');
+                } else {
+                    avgResponseElement.classList.add('text-red-600');
+                }
+            } else {
+                avgResponseElement.textContent = '--';
+                avgResponseElement.className = 'font-bold text-lg text-gray-400';
+            }
+        }
+
+        // 更新最后更新时间
+        const lastUpdateElement = document.getElementById('last-update-time');
+        if (lastUpdateElement && this.statistics.lastUpdateTime) {
+            const timeStr = this.statistics.lastUpdateTime.toLocaleTimeString('zh-CN');
+            lastUpdateElement.innerHTML = `<i class="fas fa-clock mr-1"></i>最后更新: ${timeStr}`;
+        }
+
+        // 更新进度条
+        this.updateProgressBar();
+    }
+
+    /**
+     * 更新进度条
+     */
+    private updateProgressBar(): void {
+        const progressBarElement = document.getElementById('test-progress-bar');
+        const progressTextElement = document.getElementById('test-progress-text');
+        
+        if (progressBarElement && progressTextElement) {
+            const testedCount = this.statistics.total - this.statistics.pending;
+            const progressPercentage = this.statistics.total > 0 ? 
+                Math.round((testedCount / this.statistics.total) * 100) : 0;
+            
+            // 更新进度条
+            progressBarElement.style.width = `${progressPercentage}%`;
+            progressTextElement.textContent = `${testedCount}/${this.statistics.total} (${progressPercentage}%)`;
+            
+            // 根据进度设置颜色
+            if (progressPercentage === 100) {
+                progressBarElement.className = 'h-full bg-green-500 rounded-full transition-all duration-300';
+            } else if (this.statistics.testing > 0) {
+                progressBarElement.className = 'h-full bg-blue-500 rounded-full transition-all duration-300';
+            } else {
+                progressBarElement.className = 'h-full bg-gray-400 rounded-full transition-all duration-300';
+            }
+        }
     }
 
     /**
@@ -764,6 +1415,9 @@ class HostsConnectivityChecker {
             const platform = this.platforms.get(name);
             if (platform) {
                 const successCount = platform.domains.filter(d => d.status === ConnectivityStatus.SUCCESS).length;
+                const warningCount = platform.domains.filter(d => d.status === ConnectivityStatus.WARNING).length;
+                const errorCount = platform.domains.filter(d => d.status === ConnectivityStatus.ERROR).length;
+                const testingCount = platform.domains.filter(d => d.status === ConnectivityStatus.TESTING).length;
                 const totalCount = platform.domains.length;
                 
                 // 更新平台特定的统计显示
@@ -771,7 +1425,38 @@ class HostsConnectivityChecker {
                 if (platformElement) {
                     const statsElement = platformElement.querySelector('.platform-stats');
                     if (statsElement) {
-                        statsElement.textContent = `${successCount}/${totalCount} 可用`;
+                        if (testingCount > 0) {
+                            statsElement.innerHTML = `<i class="fas fa-spinner fa-spin mr-1"></i>检测中... ${testingCount}/${totalCount}`;
+                            statsElement.className = 'platform-stats text-blue-600 font-medium';
+                        } else {
+                            const availableCount = successCount + warningCount;
+                            const successRate = totalCount > 0 ? Math.round((availableCount / totalCount) * 100) : 0;
+                            
+                            statsElement.textContent = `${availableCount}/${totalCount} 可用 (${successRate}%)`;
+                            
+                            // 根据成功率设置颜色
+                            if (successRate >= 90) {
+                                statsElement.className = 'platform-stats text-green-600 font-medium';
+                            } else if (successRate >= 70) {
+                                statsElement.className = 'platform-stats text-yellow-600 font-medium';
+                            } else {
+                                statsElement.className = 'platform-stats text-red-600 font-medium';
+                            }
+                        }
+                    }
+                    
+                    // 添加平台状态指示器
+                    const indicatorElement = platformElement.querySelector('.platform-indicator');
+                    if (indicatorElement) {
+                        if (testingCount > 0) {
+                            indicatorElement.className = 'platform-indicator w-3 h-3 rounded-full bg-blue-500 animate-pulse';
+                        } else if (errorCount === totalCount) {
+                            indicatorElement.className = 'platform-indicator w-3 h-3 rounded-full bg-red-500';
+                        } else if (successCount === totalCount) {
+                            indicatorElement.className = 'platform-indicator w-3 h-3 rounded-full bg-green-500';
+                        } else {
+                            indicatorElement.className = 'platform-indicator w-3 h-3 rounded-full bg-yellow-500';
+                        }
                     }
                 }
             }
@@ -785,11 +1470,38 @@ class HostsConnectivityChecker {
         const button = document.getElementById('test-all-btn') as HTMLButtonElement;
         if (button) {
             if (isTesting) {
-                button.innerHTML = '<i class="fas fa-stop mr-2"></i>停止测试';
-                button.className = 'px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 font-medium';
+                const testingCount = this.statistics.testing;
+                const totalCount = this.statistics.total;
+                const progressText = totalCount > 0 ? ` (${testingCount}/${totalCount})` : '';
+                
+                button.innerHTML = `<i class="fas fa-stop mr-2"></i>停止测试${progressText}`;
+                button.className = 'px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 font-medium shadow-lg transform hover:scale-105';
+                button.disabled = false;
             } else {
-                button.innerHTML = '<i class="fas fa-play mr-2"></i>测试所有';
-                button.className = 'px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium';
+                const hasResults = this.statistics.success + this.statistics.warning + this.statistics.error > 0;
+                const buttonText = hasResults ? '重新测试' : '开始测试';
+                const iconClass = hasResults ? 'fas fa-redo' : 'fas fa-play';
+                
+                button.innerHTML = `<i class="${iconClass} mr-2"></i>${buttonText}`;
+                button.className = 'px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 font-medium shadow-lg transform hover:scale-105';
+                button.disabled = false;
+            }
+        }
+        
+        // 更新按钮容器的状态指示
+        this.updateButtonContainerStatus(isTesting);
+    }
+
+    /**
+     * 更新按钮容器状态
+     */
+    private updateButtonContainerStatus(isTesting: boolean): void {
+        const container = document.querySelector('.controls-container');
+        if (container) {
+            if (isTesting) {
+                container.classList.add('testing-active');
+            } else {
+                container.classList.remove('testing-active');
             }
         }
     }
@@ -802,6 +1514,177 @@ class HostsConnectivityChecker {
         if (element) {
             element.textContent = `最后更新: ${new Date().toLocaleString()}`;
         }
+    }
+
+    /**
+     * 获取最快的域名
+     */
+    private getFastestDomain(): { domain: string; responseTime: number } | null {
+        const allDomains = this.getAllDomains();
+        const successDomains = allDomains.filter(d => 
+            d.status === ConnectivityStatus.SUCCESS && d.responseTime !== undefined
+        );
+        
+        if (successDomains.length === 0) return null;
+        
+        const fastest = successDomains.reduce((prev: DomainInfo, current: DomainInfo) => 
+            (prev.responseTime! < current.responseTime!) ? prev : current
+        );
+        
+        return { domain: fastest.domain, responseTime: fastest.responseTime! };
+    }
+
+    /**
+     * 获取最慢的域名
+     */
+    private getSlowestDomain(): { domain: string; responseTime: number } | null {
+        const allDomains = this.getAllDomains();
+        const successDomains = allDomains.filter(d => 
+            d.status === ConnectivityStatus.SUCCESS && d.responseTime !== undefined
+        );
+        
+        if (successDomains.length === 0) return null;
+        
+        const slowest = successDomains.reduce((prev: DomainInfo, current: DomainInfo) => 
+            (prev.responseTime! > current.responseTime!) ? prev : current
+        );
+        
+        return { domain: slowest.domain, responseTime: slowest.responseTime! };
+    }
+
+    /**
+     * 获取失败的域名列表
+     */
+    private getFailedDomains(): string[] {
+        const allDomains = this.getAllDomains();
+        return allDomains
+            .filter((d: DomainInfo) => d.status === ConnectivityStatus.ERROR)
+            .map((d: DomainInfo) => d.domain);
+    }
+
+    /**
+     * 创建结果详情弹窗
+     */
+    private createResultModal(data: {
+        total: number;
+        success: number;
+        warning: number;
+        error: number;
+        successRate: number;
+        averageResponseTime: number;
+        fastestDomain: { domain: string; responseTime: number } | null;
+        slowestDomain: { domain: string; responseTime: number } | null;
+        failedDomains: string[];
+    }): HTMLElement {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fadeInUp';
+        
+        const content = document.createElement('div');
+        content.className = 'bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl transform transition-all duration-300';
+        
+        content.innerHTML = `
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">📊 检测结果详情</h3>
+                <button class="text-gray-500 hover:text-gray-700 text-xl" onclick="this.closest('.fixed').remove()">×</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="text-center p-3 bg-green-50 rounded-lg">
+                        <div class="text-2xl font-bold text-green-600">${data.success}</div>
+                        <div class="text-sm text-green-700">成功</div>
+                    </div>
+                    <div class="text-center p-3 bg-yellow-50 rounded-lg">
+                        <div class="text-2xl font-bold text-yellow-600">${data.warning}</div>
+                        <div class="text-sm text-yellow-700">警告</div>
+                    </div>
+                    <div class="text-center p-3 bg-red-50 rounded-lg">
+                        <div class="text-2xl font-bold text-red-600">${data.error}</div>
+                        <div class="text-sm text-red-700">失败</div>
+                    </div>
+                    <div class="text-center p-3 bg-blue-50 rounded-lg">
+                        <div class="text-2xl font-bold text-blue-600">${data.successRate}%</div>
+                        <div class="text-sm text-blue-700">成功率</div>
+                    </div>
+                </div>
+                
+                <div class="border-t pt-4">
+                    <div class="text-sm text-gray-600 space-y-2">
+                        <div>平均响应时间: <span class="font-semibold">${data.averageResponseTime}ms</span></div>
+                        ${data.fastestDomain ? `<div>最快域名: <span class="font-semibold text-green-600">${data.fastestDomain.domain}</span> (${data.fastestDomain.responseTime}ms)</div>` : ''}
+                        ${data.slowestDomain ? `<div>最慢域名: <span class="font-semibold text-yellow-600">${data.slowestDomain.domain}</span> (${data.slowestDomain.responseTime}ms)</div>` : ''}
+                        ${data.failedDomains.length > 0 ? `<div>失败域名: <span class="font-semibold text-red-600">${data.failedDomains.join(', ')}</span></div>` : ''}
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-2 pt-4 border-t">
+                    <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">关闭</button>
+                    <button onclick="window.connectivityChecker.exportTestResults()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">导出结果</button>
+                </div>
+            </div>
+        `;
+        
+        modal.appendChild(content);
+        return modal;
+    }
+
+    /**
+     * 添加庆祝动画
+     */
+    private addCelebrationAnimation(domain: DomainInfo): void {
+        const domainElement = document.querySelector(`[data-domain="${domain.domain}"]`);
+        if (domainElement) {
+            domainElement.classList.add('animate-bounce');
+            setTimeout(() => {
+                domainElement.classList.remove('animate-bounce');
+            }, 1000);
+        }
+    }
+
+    /**
+     * 导出测试结果
+     */
+    private exportTestResults(): void {
+        const allDomains = this.getAllDomains();
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        
+        const results = {
+            timestamp: new Date().toISOString(),
+            statistics: this.statistics,
+            domains: allDomains.map((domain: DomainInfo) => ({
+                platform: this.getPlatformForDomain(domain.domain),
+                domain: domain.domain,
+                status: domain.status,
+                responseTime: domain.responseTime,
+                errorMessage: domain.errorMessage
+            }))
+        };
+        
+        // 创建并下载JSON文件
+        const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `connectivity-test-results-${timestamp}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        // 显示导出成功提示
+        this.showTestingToast('结果已导出到下载文件夹 📁', 'success');
+    }
+
+    /**
+     * 获取域名所属平台
+     */
+    private getPlatformForDomain(domain: string): string {
+        for (const [platformName, platformData] of Object.entries(this.platforms)) {
+            if (platformData.domains.some((d: DomainInfo) => d.domain === domain)) {
+                return platformName;
+            }
+        }
+        return 'Unknown';
     }
 
     /**
@@ -834,7 +1717,9 @@ class HostsConnectivityChecker {
 
 // 初始化应用
 document.addEventListener('DOMContentLoaded', () => {
-    new HostsConnectivityChecker();
+    const checker = new HostsConnectivityChecker();
+    // 将实例暴露到全局，以便弹窗中的按钮可以调用
+    (window as any).connectivityChecker = checker;
 });
 
 /**
