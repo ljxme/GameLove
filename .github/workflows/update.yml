@@ -24,6 +24,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
     
     - name: 设置 Python 环境
       uses: actions/setup-python@v4
@@ -58,7 +59,7 @@ jobs:
         git config --local user.name "GitHub Action"
         git add .
         git commit -m "🎮 自动更新 GameLove hosts 文件 - $(date '+%Y-%m-%d %H:%M:%S')"
-        git push
+        git push origin main
     
     - name: 获取当前时间
       id: date
