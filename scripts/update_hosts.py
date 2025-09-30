@@ -709,15 +709,16 @@ class FileManager:
             print("README.md文件未找到")
             return False
         
-        # 查找hosts内容的开始和结束标记
-        start_marker = "```\n# GameLove Host Start"
-        end_marker = "# GameLove Host End\n```"
+        # 使用更精确的正则表达式来匹配整个hosts代码块和更新时间行
+        import re
         
-        start_index = readme_content.find(start_marker)
-        end_index = readme_content.find(end_marker)
+        # 匹配从```开始的hosts代码块到更新时间行结束
+        pattern = r'```\n# GameLove Host Start.*?# GameLove Host End\n```\n\n该内容会自动定时更新，数据更新时间：[^\n]*'
         
-        if start_index == -1 or end_index == -1:
-            print("在README.md中未找到hosts内容标记")
+        match = re.search(pattern, readme_content, re.DOTALL)
+        
+        if not match:
+            print("在README.md中未找到完整的hosts内容块")
             return False
         
         # 处理hosts内容
@@ -726,6 +727,7 @@ class FileManager:
         # 获取更新时间
         now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S+08:00')
         
+        # 构建新的hosts块
         new_hosts_block = f"""```
 # GameLove Host Start
 {clean_hosts_content}
@@ -734,15 +736,8 @@ class FileManager:
 
 该内容会自动定时更新，数据更新时间：{now}"""
         
-        # 找到完整的替换范围
-        end_index = self._find_complete_replacement_range(readme_content, end_index, end_marker)
-        
-        # 构建新的README内容
-        new_readme_content = (
-            readme_content[:start_index] + 
-            new_hosts_block + 
-            readme_content[end_index:]
-        )
+        # 替换匹配的内容
+        new_readme_content = readme_content[:match.start()] + new_hosts_block + readme_content[match.end():]
         
         # 写入更新后的README.md
         try:
@@ -780,30 +775,7 @@ class FileManager:
         
         return '\n'.join(clean_lines)
     
-    def _find_complete_replacement_range(self, readme_content: str, end_index: int, end_marker: str) -> int:
-        """找到完整的替换范围
-        
-        Args:
-            readme_content: README内容
-            end_index: 结束标记位置
-            end_marker: 结束标记
-            
-        Returns:
-            int: 完整替换范围的结束位置
-        """
-        end_index_with_time = readme_content.find("```", end_index + len(end_marker))
-        if end_index_with_time != -1:
-            time_line_start = readme_content.find("该内容会自动定时更新", end_index_with_time)
-            if time_line_start != -1:
-                time_line_end = readme_content.find("\n", time_line_start)
-                if time_line_end != -1:
-                    return time_line_end
-                else:
-                    return len(readme_content)
-            else:
-                return end_index_with_time + 3  # 包含```
-        else:
-            return end_index + len(end_marker)
+
 
 
 class GameLoveHostsUpdater:
