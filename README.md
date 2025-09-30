@@ -62,7 +62,70 @@
 # GameLove Host End
 ```
 
-该内容会自动定时更新，数据更新时间：2025-09-30T13:33:06+08:00cmd
+该内容会自动定时更新，数据更新时间：2025-09-30T13:33:06+08:00
+
+#### 2.1.2 修改 hosts 文件
+
+hosts 文件在每个系统的位置不一，详情如下：
+
+- **Windows 系统：** `C:\Windows\System32\drivers\etc\hosts`
+- **Linux 系统：** `/etc/hosts`
+- **Mac（苹果电脑）系统：** `/etc/hosts`
+- **Android（安卓）系统：** `/system/etc/hosts`
+- **iPhone（iOS）系统：** `/etc/hosts`
+
+修改方法，把第一步的内容复制到文本末尾：
+
+- **Windows** 使用记事本。
+- **Linux、Mac** 使用 Root 权限：`sudo vi /etc/hosts`。
+- **iPhone、iPad** 须越狱、**Android** 必须要 root。
+
+#### 2.1.3 激活生效
+
+大部分情况下是直接生效，如未生效可尝试下面的办法，刷新 DNS：
+
+- **Windows：** 在 CMD 窗口输入：`ipconfig /flushdns`
+- **Linux** 命令：`sudo nscd restart`，如报错则须安装：`sudo apt install nscd` 或 `sudo /etc/init.d/nscd restart`
+- **Mac** 命令：`sudo killall -HUP mDNSResponder`
+
+**Tips：** 上述方法无效可以尝试重启机器。
+
+### 2.2 自动方式（SwitchHosts）
+
+**Tip：** 推荐 SwitchHosts 工具管理 hosts
+
+以 SwitchHosts 为例，看一下怎么使用的，配置参考下面：
+
+- **Hosts 类型:** Remote
+- **Hosts 标题:** 随意
+- **URL:** `https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts`
+- **自动刷新:** 最好选 1 小时
+
+这样每次 hosts 有更新都能及时进行更新，免去手动更新。
+
+### 2.3 一行命令
+
+#### Windows
+使用命令需要安装 git bash
+
+复制以下命令保存到本地命名为 `fetch_gamelove_hosts`：
+
+```bash
+_hosts=$(mktemp /tmp/hostsXXX)
+hosts=/c/Windows/System32/drivers/etc/hosts
+remote=https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts
+reg='/# GameLove Host Start/,/# GameLove Host End/d'
+
+sed "$reg" $hosts > "$_hosts"
+curl "$remote" >> "$_hosts"
+cat "$_hosts" > "$hosts"
+
+rm "$_hosts"
+```
+
+在CMD中执行以下命令，执行前需要替换 `git-bash.exe` 和 `fetch_gamelove_hosts` 为你本地的路径，注意前者为windows路径：
+
+```cmd
 "C:\Program Files\Git\bin\git-bash.exe" fetch_gamelove_hosts
 ```
 
