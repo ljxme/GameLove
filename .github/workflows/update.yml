@@ -73,7 +73,7 @@ jobs:
       if: steps.check_changes.outputs.has_changes == 'true' || github.event.inputs.force_update == 'true'
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: GameLove-Hosts-[${{ steps.date.outputs.tag_date }}]
+        tag_name: GameLove-Hosts-${{ steps.date.outputs.tag_date }}
         name: GameLove Hosts [${{ steps.date.outputs.date }}]
         body: |
           🎮 GameLove 游戏平台网络优化 - 自动更新
