@@ -30,87 +30,39 @@
 
 ```
 # GameLove Host Start
-23.65.19.99                    api.steampowered.com
-166.117.214.166                battle.net
+23.214.233.226                 api.steampowered.com
+166.117.114.163                battle.net
 120.55.44.14                   battlenet.com.cn
 166.117.214.166                blizzard.com
-23.11.226.172                  ea.com
-23.32.45.8                     eaassets-a.akamaihd.net
+23.220.130.177                 ea.com
+2.18.67.88                     eaassets-a.akamaihd.net
 104.18.3.180                   easyanticheat.net
-35.169.179.193                 epicgames.com
+34.192.41.153                  epicgames.com
 35.169.179.193                 fortnite.com
 151.101.129.55                 gog.com
-77.79.249.112                  gogalaxy.com
-23.65.19.99                    help.steampowered.com
+77.79.249.113                  gogalaxy.com
+23.214.233.226                 help.steampowered.com
 104.18.13.27                   launcher-public-service-prod06.ol.epicgames.com
-23.218.3.140                   origin.com
-72.247.207.77                  rockstargames.com
+23.213.79.115                  origin.com
+23.9.157.24                    rockstargames.com
 104.255.105.71                 socialclub.rockstargames.com
-23.196.49.60                   static3.cdn.ubi.com
-23.54.76.12                    steamcdn-a.akamaihd.net
-23.65.19.99                    steamcommunity.com
-23.216.5.8                     steamstore-a.akamaihd.net
-23.211.176.143                 steamuserimages-a.akamaihd.net
-184.31.101.220                 store.steampowered.com
-44.213.175.150                 ubi.com
-18.238.132.68                  ubisoft.com
+23.222.201.62                  static3.cdn.ubi.com
+23.215.0.133                   steamcdn-a.akamaihd.net
+23.214.233.226                 steamcommunity.com
+23.55.176.236                  steamstore-a.akamaihd.net
+2.18.67.79                     steamuserimages-a.akamaihd.net
+23.48.9.171                    store.steampowered.com
+44.209.50.162                  ubi.com
+18.67.76.106                   ubisoft.com
 34.232.194.187                 unrealengine.com
-52.31.3.176                    uplay.com
-# Update time: 2025-09-30T11:19:40+08:00
+34.249.82.244                  uplay.com
+# Update time: 2025-09-30T12:50:20+08:00
 # Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts
 # Star me: https://github.com/artemisia1107/GameLove
 # GameLove Host End
 ```
 
-该内容会自动定时更新，数据更新时间：2025-09-30T11:19:40+08:00
-
-#### 2.1.2 修改 hosts 文件
-
-hosts 文件在每个系统的位置不一，详情如下：
-
-- **Windows 系统：** `C:\Windows\System32\drivers\etc\hosts`
-- **Linux 系统：** `/etc/hosts`
-- **Mac（苹果电脑）系统：** `/etc/hosts`
-- **Android（安卓）系统：** `/system/etc/hosts`
-- **iPhone（iOS）系统：** `/etc/hosts`
-
-修改方法，把第一步的内容复制到文本末尾：
-
-- **Windows** 使用记事本。
-- **Linux、Mac** 使用 Root 权限：`sudo vi /etc/hosts`。
-- **iPhone、iPad** 须越狱、**Android** 必须要 root。
-
-#### 2.1.3 激活生效
-
-大部分情况下是直接生效，如未生效可尝试下面的办法，刷新 DNS：
-
-- **Windows：** 在 CMD 窗口输入：`ipconfig /flushdns`
-- **Linux** 命令：`sudo nscd restart`，如报错则须安装：`sudo apt install nscd` 或 `sudo /etc/init.d/nscd restart`
-- **Mac** 命令：`sudo killall -HUP mDNSResponder`
-
-**Tips：** 上述方法无效可以尝试重启机器。
-
-### 2.2 自动方式（SwitchHosts）
-
-**Tip：** 推荐 [SwitchHosts](https://github.com/oldj/SwitchHosts) 工具管理 hosts
-
-以 SwitchHosts 为例，看一下怎么使用的，配置参考下面：
-
-- **Hosts 类型:** Remote
-- **Hosts 标题:** 随意
-- **URL:** `https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts`
-- **自动刷新:** 最好选 1 小时
-
-这样每次 hosts 有更新都能及时进行更新，免去手动更新。
-
-### 2.3 一行命令
-
-#### Windows
-使用命令需要安装 git bash
-
-复制以下命令保存到本地命名为 `fetch_gamelove_hosts`：
-
-```bash
+该内容会自动定时更新，数据更新时间：2025-09-30T12:50:20+08:00bash
 _hosts=$(mktemp /tmp/hostsXXX)
 hosts=/c/Windows/System32/drivers/etc/hosts
 remote=https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts
