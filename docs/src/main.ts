@@ -243,11 +243,25 @@ class HostsConnectivityChecker {
      */
     private parseHostsData(hostsData: any): void {
         if (hostsData && hostsData.platforms) {
-            Object.entries(hostsData.platforms).forEach(([platformName, domains]) => {
+            // 处理实际的hosts.json格式
+            Object.entries(hostsData.platforms).forEach(([platformKey, platformData]: [string, any]) => {
+                // 将平台键名映射到显示名称
+                const platformNameMap: { [key: string]: string } = {
+                    'steam': 'Steam',
+                    'epic': 'Epic Games',
+                    'origin': 'Origin',
+                    'uplay': 'Uplay',
+                    'battle.net': 'Battle.net',
+                    'gog': 'GOG',
+                    'rockstar': 'Rockstar'
+                };
+                
+                const platformName = platformNameMap[platformKey] || platformKey;
                 const platform = this.platforms.get(platformName);
-                if (platform && Array.isArray(domains)) {
-                    platform.domains = (domains as string[]).map(domain => ({
-                        domain,
+                
+                if (platform && platformData && platformData.domains && Array.isArray(platformData.domains)) {
+                    platform.domains = platformData.domains.map((domainInfo: any) => ({
+                        domain: domainInfo.domain,
                         status: ConnectivityStatus.PENDING,
                         retryCount: 0
                     }));
