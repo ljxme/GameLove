@@ -9,6 +9,7 @@ GameLove Hosts 更新工具 - 模块化重构版本
 """
 
 import socket
+import argparse
 import time
 import json
 import os
@@ -289,18 +290,88 @@ class NslookupResolver(IPResolver):
             )
 
 
+class ConnectivityTester:
+    """连通性测试器：基于 ping 的延迟测量与最佳 IP 选择"""
+
+    def __init__(self, ping_timeout: int = 3, ping_count: int = 1):
+        self.ping_timeout = ping_timeout
+        self.ping_count = ping_count
+
+    def measure_ping_time(self, ip: str) -> Optional[float]:
+        """测量对指定 IP 的 ping 延迟（秒）
+
+        Args:
+            ip: 目标 IP
+        Returns:
+            float|None: 平均延迟（秒），失败返回 None
+        """
+        try:
+            start_time = time.time()
+            result = subprocess.run(
+                ['ping', '-n', str(self.ping_count), '-w', str(self.ping_timeout * 1000), ip],
+                capture_output=True,
+                text=True,
+                timeout=self.ping_timeout + 1
+            )
+            if result.returncode != 0:
+                return None
+
+            # Windows 输出示例：time=12ms 或 time<1ms
+            times_ms = []
+            for line in result.stdout.splitlines():
+                m = re.search(r'time[=<]\s*(\d+)ms', line)
+                if m:
+                    times_ms.append(int(m.group(1)))
+            if not times_ms:
+                # 尝试统计信息中的 Average = Xms
+                m2 = re.search(r'Average =\s*(\d+)ms', result.stdout)
+                if m2:
+                    times_ms.append(int(m2.group(1)))
+            if not times_ms:
+                return None
+
+            avg_ms = sum(times_ms) / len(times_ms)
+            return avg_ms / 1000.0
+        except Exception:
+            return None
+
+    def choose_best(self, domain: str, candidates: List[ResolveResult]) -> ResolveResult:
+        """从多个候选解析结果中选择延迟最低的 IP
+
+        Args:
+            domain: 域名（仅用于日志/一致性）
+            candidates: 成功且有效的解析结果列表
+        Returns:
+            ResolveResult: 选择的最佳结果
+        """
+        best: Optional[Tuple[ResolveResult, float]] = None
+        for cand in candidates:
+            if not cand.ip:
+                continue
+            latency = self.measure_ping_time(cand.ip)
+            # 若无法测量，退化使用解析响应时间
+            score = latency if latency is not None else (cand.response_time or float('inf'))
+            if best is None or score < best[1]:
+                best = (cand, score)
+
+        return best[0] if best else candidates[0]
+
+
 class SmartResolver(IPResolver):
-    """智能解析器 - 具有重试机制和结果验证"""
+    """智能解析器 - 具有重试机制和结果验证，并支持最佳 IP 选择"""
     
-    def __init__(self, resolvers: List[IPResolver], max_retries: int = 2):
+    def __init__(self, resolvers: List[IPResolver], max_retries: int = 2, prefer_fastest: bool = True):
         """初始化智能解析器
         
         Args:
             resolvers: 解析器列表，按优先级排序
             max_retries: 最大重试次数
+            prefer_fastest: 是否在有多个成功候选时优先选择延迟最低的 IP
         """
         self.resolvers = resolvers
         self.max_retries = max_retries
+        self.prefer_fastest = prefer_fastest
+        self.tester = ConnectivityTester()
     
     def resolve(self, domain: str) -> ResolveResult:
         """智能解析域名，包含重试和验证机制
@@ -313,15 +384,16 @@ class SmartResolver(IPResolver):
         """
         best_result = None
         all_results = []
+        success_candidates: List[ResolveResult] = []
         
         for resolver in self.resolvers:
             for attempt in range(self.max_retries + 1):
                 result = resolver.resolve(domain)
                 all_results.append(result)
                 
-                # 如果成功且IP有效，立即返回
+                # 收集成功且有效的候选，不再提前返回
                 if result.success and result.is_valid_ip:
-                    return result
+                    success_candidates.append(result)
                 
                 # 记录最佳结果（即使失败）
                 if best_result is None or self._is_better_result(result, best_result):
@@ -335,7 +407,14 @@ class SmartResolver(IPResolver):
                 if attempt < self.max_retries:
                     time.sleep(0.5)  # 重试间隔
         
-        # 返回最佳结果
+        # 如果有多个成功候选且需要选择最快，进行连通性测试选优
+        if success_candidates:
+            if self.prefer_fastest and len(success_candidates) > 1:
+                return self.tester.choose_best(domain, success_candidates)
+            # 仅一个候选或不选最快时，返回第一个成功候选
+            return success_candidates[0]
+
+        # 返回最佳失败或无效结果
         return best_result or ResolveResult(
             domain=domain,
             ip=None,
@@ -639,14 +718,19 @@ class ContentGenerator:
 class FileManager:
     """文件管理器类 - 负责文件保存和README更新"""
     
-    def __init__(self, base_dir: str = ".."):
+    def __init__(self, base_dir: Optional[str] = None):
         """初始化文件管理器
         
         Args:
             base_dir: 基础目录路径
         """
-        self.base_dir = base_dir
-        self.hosts_dir = "hosts"
+        # 自动定位到仓库根目录（scripts 的上一级）
+        if base_dir is None:
+            self.base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+        else:
+            self.base_dir = base_dir
+        # 备份目录避免与根目录 hosts 文件同名冲突
+        self.hosts_dir = "hosts_backup"
     
     def save_hosts_file(self, content: str, filename: str, is_root: bool = False) -> str:
         """保存hosts文件
@@ -785,7 +869,8 @@ class GameLoveHostsUpdater:
                  delay_between_requests: float = 0.1,
                  use_parallel: bool = True,
                  max_workers: int = 10,
-                 use_smart_resolver: bool = True):
+                 use_smart_resolver: bool = True,
+                 prefer_fastest: bool = True):
         """初始化更新器
         
         Args:
@@ -797,6 +882,7 @@ class GameLoveHostsUpdater:
         self.delay_between_requests = delay_between_requests
         self.use_parallel = use_parallel
         self.max_workers = max_workers
+        self.prefer_fastest = prefer_fastest
         
         # 初始化解析器
         self._init_resolvers(use_smart_resolver)
@@ -829,8 +915,8 @@ class GameLoveHostsUpdater:
         ]
         
         if use_smart_resolver:
-            # 使用智能解析器
-            self.resolver = SmartResolver(base_resolvers, max_retries=2)
+            # 使用智能解析器（可选最快 IP）
+            self.resolver = SmartResolver(base_resolvers, max_retries=2, prefer_fastest=self.prefer_fastest)
         else:
             # 使用组合解析器
             self.resolver = CompositeResolver(base_resolvers)
@@ -1154,8 +1240,8 @@ class GameLoveHostsUpdater:
         print(f"   平均速度: {self.stats['total_domains']/self.stats['total_time']:.2f} 域名/秒")
         print(f"\n📁 文件位置:")
         print(f"   主文件: 根目录 (hosts, hosts.json)")
-        print(f"   备份: hosts/ 目录")
-        print(f"   统计报告: hosts/statistics_report.txt")
+        print(f"   备份: {self.file_manager.hosts_dir}/ 目录")
+        print(f"   统计报告: {self.file_manager.hosts_dir}/statistics_report.txt")
         print(f"\n📖 使用说明请查看 README.md")
         print(f"⭐ 如果觉得有用，请给项目点个星: https://github.com/artemisia1107/GameLove")
     
@@ -1185,12 +1271,33 @@ class GameLoveHostsUpdater:
 
 def main():
     """主函数入口"""
-    # 可以通过参数配置不同的运行模式
+    parser = argparse.ArgumentParser(description="GameLove Hosts 更新工具")
+    parser.add_argument("--delay", type=float, default=0.1, help="串行模式下的请求间延迟（秒）")
+    parser.add_argument("--workers", type=int, default=10, help="并行模式下的最大工作线程数")
+
+    group_parallel = parser.add_mutually_exclusive_group()
+    group_parallel.add_argument("--parallel", dest="parallel", action="store_true", help="启用并行解析")
+    group_parallel.add_argument("--no-parallel", dest="parallel", action="store_false", help="禁用并行解析")
+    parser.set_defaults(parallel=True)
+
+    group_smart = parser.add_mutually_exclusive_group()
+    group_smart.add_argument("--smart", dest="smart", action="store_true", help="使用智能解析器")
+    group_smart.add_argument("--no-smart", dest="smart", action="store_false", help="使用组合解析器")
+    parser.set_defaults(smart=True)
+
+    group_fastest = parser.add_mutually_exclusive_group()
+    group_fastest.add_argument("--fastest", dest="fastest", action="store_true", help="在多个候选时优选延迟最低的 IP")
+    group_fastest.add_argument("--no-fastest", dest="fastest", action="store_false", help="不进行延迟优选，使用首个成功候选")
+    parser.set_defaults(fastest=True)
+
+    args = parser.parse_args([]) if os.environ.get("GAMELOVE_ARGS_INLINE") else parser.parse_args()
+
     updater = GameLoveHostsUpdater(
-        delay_between_requests=0.1,
-        use_parallel=True,          # 启用并行处理
-        max_workers=10,             # 最大工作线程数
-        use_smart_resolver=True     # 启用智能解析器
+        delay_between_requests=args.delay,
+        use_parallel=args.parallel,
+        max_workers=args.workers,
+        use_smart_resolver=args.smart,
+        prefer_fastest=args.fastest
     )
     updater.run()
 
