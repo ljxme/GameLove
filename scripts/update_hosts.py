@@ -23,6 +23,28 @@ from typing import Dict, List, Optional, Tuple, Any, Set
 from dataclasses import dataclass, field
 from enum import Enum
 
+# 指定 DNS 解析服务器列表（按优先级）
+DNS_SERVER_LIST = [
+    "1.1.1.1",            # Cloudflare DNS
+    "8.8.8.8",            # Google Public DNS
+    "101.101.101.101",    # Quad101 DNS (台湾)
+    "101.102.103.104",    # Quad101 DNS (台湾备用)
+]
+
+# 模块化导入（解析器、平台配置、内容与文件管理）
+from modules.resolvers import (
+    DNSResolver as R_DNSResolver,
+    PingResolver as R_PingResolver,
+    NslookupResolver as R_NslookupResolver,
+    SmartResolver as R_SmartResolver,
+    CompositeResolver as R_CompositeResolver,
+    ParallelResolver as R_ParallelResolver,
+    ResolveResult as R_ResolveResult,
+)
+from modules.platforms import GamePlatformConfig as P_GamePlatformConfig
+from modules.content import ContentGenerator as C_ContentGenerator, create_statistics_report_content
+from modules.files import FileManager as F_FileManager
+
 
 class ResolveMethod(Enum):
     """IP解析方法枚举"""
@@ -223,44 +245,45 @@ class PingResolver(IPResolver):
 
 
 class NslookupResolver(IPResolver):
-    """Nslookup解析器实现类"""
+    """Nslookup解析器实现类，支持指定 DNS 服务器列表"""
     
-    def __init__(self, timeout: int = 10):
+    def __init__(self, timeout: int = 10, nameservers: Optional[List[str]] = None):
         """初始化Nslookup解析器
         
         Args:
             timeout: 超时时间（秒）
+            nameservers: 指定的 DNS 服务器列表（可选）
         """
         self.timeout = timeout
+        self.nameservers = nameservers or []
+    
+    def _parse_nslookup_output(self, stdout: str) -> Optional[str]:
+        """从 nslookup 输出中解析 IPv4 地址"""
+        lines = stdout.split('\n')
+        for line in lines:
+            if 'Address:' in line and '::' not in line:  # 排除IPv6
+                ip_match = re.search(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', line)
+                if ip_match:
+                    return ip_match.group()
+        return None
     
     def resolve(self, domain: str) -> ResolveResult:
-        """通过nslookup获取IP地址
-        
-        Args:
-            domain: 要解析的域名
-            
-        Returns:
-            ResolveResult: Nslookup解析结果
-        """
-        start_time = time.time()
-        
-        try:
-            result = subprocess.run(
-                ['nslookup', domain],
-                capture_output=True,
-                text=True,
-                timeout=self.timeout
-            )
-            
-            response_time = time.time() - start_time
-            
-            if result.returncode == 0:
-                lines = result.stdout.split('\n')
-                for line in lines:
-                    if 'Address:' in line and '::' not in line:  # 排除IPv6
-                        ip_match = re.search(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', line)
-                        if ip_match:
-                            ip = ip_match.group()
+        """通过 nslookup（可指定 DNS 服务器）获取 IP 地址"""
+        # 优先尝试指定的 DNS 服务器
+        if self.nameservers:
+            for server in self.nameservers:
+                start_time = time.time()
+                try:
+                    result = subprocess.run(
+                        ['nslookup', domain, server],
+                        capture_output=True,
+                        text=True,
+                        timeout=self.timeout
+                    )
+                    response_time = time.time() - start_time
+                    if result.returncode == 0:
+                        ip = self._parse_nslookup_output(result.stdout)
+                        if ip:
                             return ResolveResult(
                                 domain=domain,
                                 ip=ip,
@@ -268,7 +291,31 @@ class NslookupResolver(IPResolver):
                                 success=True,
                                 response_time=response_time
                             )
-            
+                except Exception as e:
+                    # 针对单个服务器的错误不直接返回失败，继续下一个
+                    last_error = str(e)
+                    continue
+        
+        # 回退到系统默认 nslookup
+        start_time = time.time()
+        try:
+            result = subprocess.run(
+                ['nslookup', domain],
+                capture_output=True,
+                text=True,
+                timeout=self.timeout
+            )
+            response_time = time.time() - start_time
+            if result.returncode == 0:
+                ip = self._parse_nslookup_output(result.stdout)
+                if ip:
+                    return ResolveResult(
+                        domain=domain,
+                        ip=ip,
+                        method=ResolveMethod.NSLOOKUP,
+                        success=True,
+                        response_time=response_time
+                    )
             return ResolveResult(
                 domain=domain,
                 ip=None,
@@ -277,7 +324,6 @@ class NslookupResolver(IPResolver):
                 error="No IP found in nslookup output",
                 response_time=response_time
             )
-            
         except Exception as e:
             response_time = time.time() - start_time
             return ResolveResult(
@@ -887,9 +933,9 @@ class GameLoveHostsUpdater:
         # 初始化解析器
         self._init_resolvers(use_smart_resolver)
         
-        # 初始化其他组件
-        self.content_generator = ContentGenerator()
-        self.file_manager = FileManager()
+        # 初始化其他组件（使用模块化实现）
+        self.content_generator = C_ContentGenerator()
+        self.file_manager = F_FileManager()
         
         # 统计信息
         self.stats = {
@@ -907,23 +953,23 @@ class GameLoveHostsUpdater:
         Args:
             use_smart_resolver: 是否使用智能解析器
         """
-        # 创建基础解析器
+        # 创建基础解析器（Nslookup 使用指定 DNS 服务器列表）
         base_resolvers = [
-            DNSResolver(timeout=10.0),
-            PingResolver(timeout=5, count=1),
-            NslookupResolver(timeout=10)
+            R_DNSResolver(timeout=10.0),
+            R_PingResolver(timeout=5, count=1),
+            R_NslookupResolver(timeout=10, nameservers=DNS_SERVER_LIST)
         ]
         
         if use_smart_resolver:
             # 使用智能解析器（可选最快 IP）
-            self.resolver = SmartResolver(base_resolvers, max_retries=2, prefer_fastest=self.prefer_fastest)
+            self.resolver = R_SmartResolver(base_resolvers, max_retries=2, prefer_fastest=self.prefer_fastest)
         else:
             # 使用组合解析器
-            self.resolver = CompositeResolver(base_resolvers)
+            self.resolver = R_CompositeResolver(base_resolvers)
         
         # 如果启用并行处理，包装为并行解析器
         if self.use_parallel:
-            self.parallel_resolver = ParallelResolver(self.resolver, self.max_workers)
+            self.parallel_resolver = R_ParallelResolver(self.resolver, self.max_workers)
     
     def resolve_all_domains(self) -> Tuple[Dict[str, str], List[str], Dict[str, ResolveResult]]:
         """解析所有游戏平台域名
@@ -932,13 +978,13 @@ class GameLoveHostsUpdater:
             Tuple[Dict[str, str], List[str], Dict[str, ResolveResult]]: 
             (成功解析的IP字典, 失败域名列表, 详细解析结果)
         """
-        all_domains = GamePlatformConfig.get_all_domains()
+        all_domains = P_GamePlatformConfig.get_all_domains()
         self.stats['total_domains'] = len(all_domains)
         self.stats['start_time'] = time.time()
         
         print(f"🔍 开始解析 {len(all_domains)} 个游戏平台域名...")
         print(f"📊 解析模式: {'并行' if self.use_parallel else '串行'}")
-        print(f"🧠 解析器类型: {'智能解析器' if isinstance(self.resolver, SmartResolver) else '组合解析器'}")
+        print(f"🧠 解析器类型: {'智能解析器' if isinstance(self.resolver, R_SmartResolver) else '组合解析器'}")
         print()
         
         if self.use_parallel:
@@ -1002,7 +1048,7 @@ class GameLoveHostsUpdater:
     def generate_and_save_files(self, 
                                ip_dict: Dict[str, str], 
                                failed_domains: List[str],
-                               detailed_results: Dict[str, ResolveResult]) -> None:
+                               detailed_results: Dict[str, R_ResolveResult]) -> None:
         """生成并保存所有文件
         
         Args:
@@ -1106,7 +1152,7 @@ class GameLoveHostsUpdater:
             'resolver_config': {
                 'parallel_mode': self.use_parallel,
                 'max_workers': self.max_workers if self.use_parallel else 1,
-                'smart_resolver': isinstance(self.resolver, SmartResolver)
+                'smart_resolver': isinstance(self.resolver, R_SmartResolver)
             }
         })
         
@@ -1120,7 +1166,7 @@ class GameLoveHostsUpdater:
         """
         print(f"\n📁 生成分平台hosts文件...")
         
-        for platform_name, platform_info in GamePlatformConfig.get_all_platforms().items():
+        for platform_name, platform_info in P_GamePlatformConfig.get_all_platforms().items():
             platform_ips = {
                 domain: ip_dict[domain] 
                 for domain in platform_info.domains 
@@ -1144,7 +1190,7 @@ class GameLoveHostsUpdater:
         Args:
             detailed_results: 详细解析结果
         """
-        report_content = self._create_statistics_report_content(detailed_results)
+        report_content = create_statistics_report_content(detailed_results, self.stats)
         
         report_file = self.file_manager.save_hosts_file(
             report_content, 
@@ -1205,7 +1251,7 @@ class GameLoveHostsUpdater:
         
         # 平台统计
         content += f"\n平台解析统计:\n"
-        for platform_name, platform_info in GamePlatformConfig.get_all_platforms().items():
+        for platform_name, platform_info in P_GamePlatformConfig.get_all_platforms().items():
             success_count = sum(1 for domain in platform_info.domains 
                               if domain in detailed_results and 
                               detailed_results[domain].success and 
