@@ -127,13 +127,17 @@ class HostsConnectivityChecker {
     private bindEvents(): void {
         const testAllBtn = document.getElementById('test-all-btn');
         const refreshBtn = document.getElementById('refresh-btn');
-        
+
         if (testAllBtn) {
-            testAllBtn.addEventListener('click', () => this.handleTestAllClick());
+            const handler = () => this.handleTestAllClick();
+            (testAllBtn as any).__onClick = handler;
+            testAllBtn.addEventListener('click', handler);
         }
-        
+
         if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => this.refreshStatus());
+            const handler = () => this.refreshStatus();
+            (refreshBtn as any).__onClick = handler;
+            refreshBtn.addEventListener('click', handler);
         }
     }
 
@@ -1187,14 +1191,16 @@ class HostsConnectivityChecker {
         this.performanceMonitor.destroy();
         
         // 清理DOM事件监听器
-        const testBtn = document.getElementById('test-all-btn');
-        const refreshBtn = document.getElementById('refresh-btn');
-        
-        if (testBtn) {
-            testBtn.removeEventListener('click', this.handleTestAllClick.bind(this));
+        const testBtn = document.getElementById('test-all-btn') as any;
+        const refreshBtn = document.getElementById('refresh-btn') as any;
+
+        if (testBtn && testBtn.__onClick) {
+            testBtn.removeEventListener('click', testBtn.__onClick);
+            delete testBtn.__onClick;
         }
-        if (refreshBtn) {
-            refreshBtn.removeEventListener('click', this.refreshStatus.bind(this));
+        if (refreshBtn && refreshBtn.__onClick) {
+            refreshBtn.removeEventListener('click', refreshBtn.__onClick);
+            delete refreshBtn.__onClick;
         }
     }
 
@@ -1329,6 +1335,16 @@ class HostsConnectivityChecker {
                 }, 300);
             }
         });
+
+        // 同步更新顶部精简总计（仅数字）
+        const headerTotalElement = document.getElementById('total-count-header');
+        if (headerTotalElement) {
+            headerTotalElement.textContent = (this.statistics.total || 0).toString();
+            headerTotalElement.classList.add('animate-pulse');
+            setTimeout(() => {
+                headerTotalElement.classList.remove('animate-pulse');
+            }, 300);
+        }
 
         // 更新成功率显示
         const successRateElement = document.getElementById('success-rate');
@@ -1715,12 +1731,15 @@ class HostsConnectivityChecker {
     }
 }
 
-// 初始化应用
-document.addEventListener('DOMContentLoaded', () => {
-    const checker = new HostsConnectivityChecker();
-    // 将实例暴露到全局，以便弹窗中的按钮可以调用
-    (window as any).connectivityChecker = checker;
-});
+// 初始化应用（兜底方法）
+function initChecker() {
+    // 避免在开发模式/HMR下重复初始化
+    if (!(window as any).connectivityChecker) {
+        const checker = new HostsConnectivityChecker();
+        // 将实例暴露到全局，以便弹窗中的按钮可以调用
+        (window as any).connectivityChecker = checker;
+    }
+}
 
 /**
  * 性能监控配置接口
@@ -1818,4 +1837,33 @@ class PerformanceMonitor {
         }
         this.performanceEntries.clear();
     }
+}
+import { createApp } from 'vue';
+import App from './App.vue';
+
+// 先挂载 Vue 应用，确保 DOM 节点就绪
+const app = createApp(App);
+app.mount('#app');
+
+// 根据文档加载状态初始化检查器，确保节点已就绪
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initChecker);
+} else {
+    initChecker();
+}
+
+// 在开发模式下处理 HMR：释放旧实例与事件，避免失效绑定与资源泄漏
+if (import.meta && (import.meta as any).hot) {
+    (import.meta as any).hot.dispose(() => {
+        const w: any = window as any;
+        const checker = w.connectivityChecker;
+        if (checker && typeof checker.destroy === 'function') {
+            try {
+                checker.destroy();
+            } catch (_) {
+                // ignore
+            }
+        }
+        delete w.connectivityChecker;
+    });
 }

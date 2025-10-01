@@ -10,7 +10,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-7xl">
+    <div id="app" class="container mx-auto px-4 py-8 max-w-7xl">
         <!-- Header -->
         <header class="text-center mb-8">
             <div class="flex items-center justify-center mb-4">
@@ -36,7 +36,8 @@
                         <i class="fas fa-clock mr-1"></i>最后更新: --
                     </span>
                     <span class="flex items-center">
-                        <i class="fas fa-list mr-1"></i>总计: <span id="total-count" class="ml-1 font-semibold">--</span> 个域名
+                        <i class="fas fa-list mr-1"></i>
+                        <span id="total-count-header" class="ml-1 font-semibold">--</span>
                     </span>
                 </div>
             </div>

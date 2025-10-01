@@ -1,5 +1,17 @@
 /* postcss-enable */
 
+/* Custom shake animation used by main.ts */
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+  75% { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+.animate-shake {
+  animation: shake 0.6s ease-in-out;
+}
+
 *, ::before, ::after {
   --tw-border-spacing-x: 0;
   --tw-border-spacing-y: 0;
