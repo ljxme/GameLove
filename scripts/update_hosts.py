@@ -34,6 +34,7 @@ from modules.resolvers import (
 from modules.platforms import GamePlatformConfig as P_GamePlatformConfig
 from modules.content import ContentGenerator as C_ContentGenerator, create_statistics_report_content
 from modules.files import FileManager as F_FileManager
+from modules.discovery import DomainDiscovery
 
 class GameLoveHostsUpdater:
     """GameLove Hosts更新器主控制类 - 重构版本"""
@@ -63,6 +64,8 @@ class GameLoveHostsUpdater:
         # 初始化其他组件（使用模块化实现）
         self.content_generator = C_ContentGenerator()
         self.file_manager = F_FileManager()
+        self.discovery: DomainDiscovery | None = None
+        self.platform_discovered: Dict[str, List[str]] = {}
         
         # 统计信息
         self.stats = {
@@ -97,6 +100,8 @@ class GameLoveHostsUpdater:
         # 如果启用并行处理，包装为并行解析器
         if self.use_parallel:
             self.parallel_resolver = R_ParallelResolver(self.resolver, self.max_workers)
+        # 初始化发现器（在解析器就绪后）
+        self.discovery = DomainDiscovery(self.resolver)
     
     def resolve_all_domains(self) -> Tuple[Dict[str, str], List[str], Dict[str, R_ResolveResult]]:
         """解析所有游戏平台域名
@@ -105,7 +110,12 @@ class GameLoveHostsUpdater:
             Tuple[Dict[str, str], List[str], Dict[str, R_ResolveResult]]: 
             (成功解析的IP字典, 失败域名列表, 详细解析结果)
         """
+        # 静态域名
         all_domains = P_GamePlatformConfig.get_all_domains()
+        # 运行态发现新域名并合并
+        self.platform_discovered = self.discovery.discover_all_platforms() if self.discovery else {}
+        discovered_list: List[str] = [d for domains in self.platform_discovered.values() for d in domains]
+        augmented_domains = list(dict.fromkeys(all_domains + discovered_list))  # 去重保持顺序
         self.stats['total_domains'] = len(all_domains)
         self.stats['start_time'] = time.time()
         
@@ -116,11 +126,11 @@ class GameLoveHostsUpdater:
         
         if self.use_parallel:
             # 并行解析
-            detailed_results = self.parallel_resolver.resolve_batch(all_domains)
+            detailed_results = self.parallel_resolver.resolve_batch(augmented_domains)
         else:
             # 串行解析
             detailed_results = {}
-            for domain in all_domains:
+            for domain in augmented_domains:
                 result = self.resolver.resolve(domain)
                 detailed_results[domain] = result
                 
@@ -220,6 +230,17 @@ class GameLoveHostsUpdater:
             print("✅ README.md已成功更新")
         else:
             print("❌ README.md更新失败")
+
+        # 更新 README 平台域名数量（静态 + 发现）
+        platform_counts: Dict[str, int] = {}
+        for name, info in P_GamePlatformConfig.get_all_platforms().items():
+            discovered = self.platform_discovered.get(name, [])
+            platform_counts[name] = len(info.domains) + len(discovered)
+        print(f"\n📝 更新README.md中的平台域名数量...")
+        if self.file_manager.update_readme_platform_counts(platform_counts):
+            print("✅ README.md平台域名数量已更新")
+        else:
+            print("❌ README.md平台域名数量更新失败")
     
     def _generate_enhanced_json_data(self, 
                                    ip_dict: Dict[str, str], 

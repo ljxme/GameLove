@@ -132,3 +132,45 @@ class FileManager:
             if line and line not in ['# GameLove Host Start', '# GameLove Host End']:
                 clean_lines.append(line)
         return '\n'.join(clean_lines)
+
+    def update_readme_platform_counts(self, platform_counts: Dict[str, int]) -> bool:
+        """更新 README.md 中平台域名数量统计表
+
+        该方法定位到“支持的游戏平台”表格区域，并将每一行中的“X个域名”替换为传入的实际数量。
+
+        Args:
+            platform_counts: 平台名称到域名数量的映射
+
+        Returns:
+            bool: 是否更新成功
+        """
+        readme_path = os.path.join(self.base_dir, 'README.md')
+        try:
+            with open(readme_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        except FileNotFoundError:
+            print('README.md文件未找到')
+            return False
+
+        import re
+        # 构造每个平台的替换规则，匹配表格行并更新“X个域名”
+        updated_content = content
+        for name, count in platform_counts.items():
+            # 平台名在 README 中可能有装饰，如加粗或图标，这里仅根据平台关键字匹配行
+            # 例如："**Steam** | 7个域名" 或 "Battle.net | 4个域名"
+            pattern = rf"(^.*?{re.escape(name)}.*?\|\s*)\d+个域名"
+            replacement = rf"\1{count}个域名"
+            updated_content = re.sub(pattern, replacement, updated_content, flags=re.MULTILINE)
+
+        if updated_content == content:
+            print('README 平台域名数量未变化或未匹配到表格行')
+            return False
+
+        try:
+            with open(readme_path, 'w', encoding='utf-8') as f:
+                f.write(updated_content)
+            print('README 平台域名数量统计已更新')
+            return True
+        except Exception as e:
+            print(f'更新 README 平台域名数量失败：{e}')
+            return False
