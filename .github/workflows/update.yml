@@ -110,10 +110,11 @@ jobs:
         draft: false
         prerelease: false
 
-    - name: 清理旧版本（仅保留最新版本）
+    - name: 清理旧版本与标签（仅保留最新）
       if: steps.check_changes.outputs.has_changes == 'true' || github.event.inputs.force_update == 'true'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # 获取所有以 GameLove-Hosts- 开头的发布版本，按创建时间排序
         releases=$(gh release list --repo ${{ github.repository }} --limit 100 --json tagName,createdAt | \
@@ -134,7 +135,7 @@ jobs:
           # 删除旧版本
           for tag in $old_releases; do
             echo "删除版本: $tag"
-            gh release delete "$tag" --repo ${{ github.repository }} --yes || echo "删除 $tag 失败，可能已被删除"
+            gh release delete "$tag" --repo ${{ github.repository }} --yes --cleanup-tag || echo "删除 $tag 或其 Tag 失败，可能已被删除"
           done
         else
           echo "当前版本数量: $total_count，无需清理（仅保留最新版本策略）"
