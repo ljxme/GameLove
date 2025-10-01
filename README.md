@@ -92,8 +92,7 @@ hosts 文件在每个系统的位置不一，详情如下：
 
 ### 2.2 自动方式（SwitchHosts）
 
-**Tip：** 推荐 SwitchHosts 工具管理 hosts
-
+**Tip：** 推荐 [SwitchHosts](https://github.com/oldj/SwitchHosts) 工具管理 hosts
 以 SwitchHosts 为例，看一下怎么使用的，配置参考下面：
 
 - **Hosts 类型:** Remote

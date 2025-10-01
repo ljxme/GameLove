@@ -80,7 +80,7 @@ jobs:
           
           📅 更新时间: ${{ steps.date.outputs.date }}
           🔄 更新方式: 自动更新
-          ⚠️ 注意: 只保留最近10次更新，旧版本会自动清理
+          ⚠️ 注意: 只保留最新版本，旧版本会自动清理
           
           ## 📥 快速使用
           
@@ -93,7 +93,7 @@ jobs:
           sudo curl -o /etc/hosts https://raw.githubusercontent.com/${{ github.repository }}/main/hosts
           ```
           
-          ### 方法二：SwitchHosts
+          ### 方法二：[SwitchHosts](https://github.com/oldj/SwitchHosts)
           - URL: `https://raw.githubusercontent.com/${{ github.repository }}/main/hosts`
           - 自动刷新: 1小时
           
@@ -110,7 +110,7 @@ jobs:
         draft: false
         prerelease: false
 
-    - name: 清理旧版本
+    - name: 清理旧版本（仅保留最新版本）
       if: steps.check_changes.outputs.has_changes == 'true' || github.event.inputs.force_update == 'true'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -122,11 +122,11 @@ jobs:
         
         # 计算需要删除的版本数量
         total_count=$(echo "$releases" | wc -l)
-        keep_count=10
+        keep_count=1
         
         if [ $total_count -gt $keep_count ]; then
           delete_count=$((total_count - keep_count))
-          echo "总共有 $total_count 个版本，保留最新 $keep_count 个，删除最旧 $delete_count 个"
+          echo "总共有 $total_count 个版本，保留最新 $keep_count 个，删除其余 $delete_count 个"
           
           # 获取需要删除的版本（最旧的几个）
           old_releases=$(echo "$releases" | tail -n $delete_count)
@@ -137,5 +137,5 @@ jobs:
             gh release delete "$tag" --repo ${{ github.repository }} --yes || echo "删除 $tag 失败，可能已被删除"
           done
         else
-          echo "当前版本数量: $total_count，无需清理"
+          echo "当前版本数量: $total_count，无需清理（仅保留最新版本策略）"
         fi
