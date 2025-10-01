@@ -729,8 +729,8 @@ class FileManager:
             self.base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
         else:
             self.base_dir = base_dir
-        # 备份目录避免与根目录 hosts 文件同名冲突
-        self.hosts_dir = "hosts_backup"
+        # 备份目录使用仓库内的 scripts/hosts（与现有结构保持一致）
+        self.hosts_dir = os.path.join(self.base_dir, "scripts", "hosts")
     
     def save_hosts_file(self, content: str, filename: str, is_root: bool = False) -> str:
         """保存hosts文件
