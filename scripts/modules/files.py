@@ -174,8 +174,10 @@ class FileManager:
             # 平台名在 README 中可能有装饰，如加粗或图标，这里仅根据平台关键字匹配行
             # 例如："**Steam** | 7个域名" 或 "Battle.net | 4个域名"
             pattern = rf"(^.*?{re.escape(name)}.*?\|\s*)\d+个域名"
-            replacement = rf"\1{count}个域名"
-            updated_section = re.sub(pattern, replacement, updated_section, flags=re.MULTILINE)
+            # 使用函数式替换，彻底规避反向引用与数字拼接导致的 \17、\117 等错误
+            def _repl(m, c=count):
+                return f"{m.group(1)}{c}个域名"
+            updated_section = re.sub(pattern, _repl, updated_section, flags=re.MULTILINE)
 
         if updated_section == section:
             print('README 平台域名数量未变化或未匹配到表格行')
