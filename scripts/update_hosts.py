@@ -44,7 +44,10 @@ class GameLoveHostsUpdater:
                  use_parallel: bool = True,
                  max_workers: int = 10,
                  use_smart_resolver: bool = True,
-                 prefer_fastest: bool = True):
+                 prefer_fastest: bool = True,
+                 discovery_strategies: List[str] | None = None,
+                 rate_limit: float | None = None,
+                 discovery_timeout: float = 2.0):
         """初始化更新器
         
         Args:
@@ -57,6 +60,9 @@ class GameLoveHostsUpdater:
         self.use_parallel = use_parallel
         self.max_workers = max_workers
         self.prefer_fastest = prefer_fastest
+        self.discovery_strategies = discovery_strategies or ["pattern"]
+        self.rate_limit = rate_limit
+        self.discovery_timeout = discovery_timeout
         
         # 初始化解析器
         self._init_resolvers(use_smart_resolver)
@@ -101,7 +107,12 @@ class GameLoveHostsUpdater:
         if self.use_parallel:
             self.parallel_resolver = R_ParallelResolver(self.resolver, self.max_workers)
         # 初始化发现器（在解析器就绪后）
-        self.discovery = DomainDiscovery(self.resolver)
+        self.discovery = DomainDiscovery(
+            self.resolver,
+            strategies=self.discovery_strategies,
+            rate_limit=self.rate_limit,
+            timeout=self.discovery_timeout,
+        )
     
     def resolve_all_domains(self) -> Tuple[Dict[str, str], List[str], Dict[str, R_ResolveResult]]:
         """解析所有游戏平台域名
@@ -256,54 +267,20 @@ class GameLoveHostsUpdater:
         Returns:
             Dict[str, Any]: 增强的JSON数据
         """
-        # 基础JSON数据
-        json_data = self.content_generator.generate_json_data(ip_dict, failed_domains)
-        
-        # 添加详细统计信息
-        method_stats = {}
-        response_time_stats = []
-        
-        for result in detailed_results.values():
-            if result.method:
-                method_name = result.method.value
-                if method_name not in method_stats:
-                    method_stats[method_name] = {'success': 0, 'failed': 0, 'total': 0}
-                
-                method_stats[method_name]['total'] += 1
-                if result.success:
-                    method_stats[method_name]['success'] += 1
-                else:
-                    method_stats[method_name]['failed'] += 1
-            
-            if result.response_time is not None:
-                response_time_stats.append(result.response_time)
-        
-        # 计算响应时间统计
-        if response_time_stats:
-            avg_response_time = sum(response_time_stats) / len(response_time_stats)
-            min_response_time = min(response_time_stats)
-            max_response_time = max(response_time_stats)
-        else:
-            avg_response_time = min_response_time = max_response_time = 0
-        
-        # 添加增强信息
-        json_data.update({
-            'performance_stats': {
-                'total_time': f"{self.stats['total_time']:.2f}s",
-                'avg_response_time': f"{avg_response_time:.2f}s",
-                'min_response_time': f"{min_response_time:.2f}s",
-                'max_response_time': f"{max_response_time:.2f}s",
-                'domains_per_second': f"{len(detailed_results) / self.stats['total_time']:.2f}" if self.stats['total_time'] > 0 else "0"
-            },
-            'method_stats': method_stats,
-            'resolver_config': {
-                'parallel_mode': self.use_parallel,
-                'max_workers': self.max_workers if self.use_parallel else 1,
-                'smart_resolver': isinstance(self.resolver, R_SmartResolver)
-            }
-        })
-        
-        return json_data
+        # 统一由 content 模块生成增强 JSON
+        resolver_config = {
+            'parallel_mode': self.use_parallel,
+            'max_workers': self.max_workers if self.use_parallel else 1,
+            'smart_resolver': isinstance(self.resolver, R_SmartResolver)
+        }
+        return self.content_generator.generate_enhanced_json_data(
+            ip_dict,
+            failed_domains,
+            detailed_results,
+            self.stats,
+            resolver_config,
+            self.platform_discovered,
+        )
     
     def _generate_platform_files(self, ip_dict: Dict[str, str]) -> None:
         """生成分平台hosts文件
@@ -392,6 +369,9 @@ def main():
     parser = argparse.ArgumentParser(description="GameLove Hosts 更新工具")
     parser.add_argument("--delay", type=float, default=0.1, help="串行模式下的请求间延迟（秒）")
     parser.add_argument("--workers", type=int, default=10, help="并行模式下的最大工作线程数")
+    parser.add_argument("--discovery-strategies", type=str, default="pattern", help="域名发现策略，逗号分隔：pattern,dns,robots")
+    parser.add_argument("--rate-limit", type=float, default=5.0, help="发现阶段请求速率限制（每秒）")
+    parser.add_argument("--discovery-timeout", type=float, default=2.0, help="发现阶段网络请求超时（秒）")
 
     group_parallel = parser.add_mutually_exclusive_group()
     group_parallel.add_argument("--parallel", dest="parallel", action="store_true", help="启用并行解析")
@@ -410,12 +390,16 @@ def main():
 
     args = parser.parse_args([]) if os.environ.get("GAMELOVE_ARGS_INLINE") else parser.parse_args()
 
+    strategies = [s.strip() for s in (args.discovery_strategies or "").split(',') if s.strip()]
     updater = GameLoveHostsUpdater(
         delay_between_requests=args.delay,
         use_parallel=args.parallel,
         max_workers=args.workers,
         use_smart_resolver=args.smart,
-        prefer_fastest=args.fastest
+        prefer_fastest=args.fastest,
+        discovery_strategies=strategies or ["pattern"],
+        rate_limit=args.rate_limit,
+        discovery_timeout=args.discovery_timeout,
     )
     updater.run()
 

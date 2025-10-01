@@ -6,7 +6,7 @@
 """
 
 from datetime import datetime
-from typing import Dict
+from typing import Dict, List, Any
 
 from .platforms import GamePlatformConfig
 from .resolvers import ResolveResult
@@ -78,6 +78,85 @@ class ContentGenerator:
                 'repository': 'https://github.com/artemisia1107/GameLove',
             },
         }
+
+    @staticmethod
+    def generate_enhanced_json_data(
+        ip_dict: Dict[str, str],
+        failed_domains: List[str],
+        detailed_results: Dict[str, ResolveResult],
+        stats: Dict[str, Any],
+        resolver_config: Dict[str, Any],
+        platform_discovered: Dict[str, List[str]] | None = None,
+    ) -> Dict[str, Any]:
+        """生成增强版 JSON 数据，统一统计方法、性能指标与解析器配置
+
+        Args:
+            ip_dict: 成功解析的域名到 IP 映射
+            failed_domains: 解析失败的域名列表
+            detailed_results: 详细解析结果
+            stats: 上层统计信息（总数、成功/失败、耗时等）
+            resolver_config: 解析器配置（并行、智能解析器等）
+            platform_discovered: 发现的新域名映射（可选）
+
+        Returns:
+            Dict[str, Any]: 完整增强 JSON 数据
+        """
+        base = ContentGenerator.generate_json_data(ip_dict, failed_domains)
+
+        # 方法统计与响应时间
+        method_stats: Dict[str, Dict[str, int]] = {}
+        response_times: List[float] = []
+
+        for result in detailed_results.values():
+            if result.method:
+                method_name = result.method.value
+                if method_name not in method_stats:
+                    method_stats[method_name] = {"success": 0, "failed": 0, "total": 0}
+                method_stats[method_name]["total"] += 1
+                if result.success:
+                    method_stats[method_name]["success"] += 1
+                else:
+                    method_stats[method_name]["failed"] += 1
+            if result.response_time is not None:
+                response_times.append(result.response_time)
+
+        if response_times:
+            avg_response_time = sum(response_times) / len(response_times)
+            min_response_time = min(response_times)
+            max_response_time = max(response_times)
+        else:
+            avg_response_time = min_response_time = max_response_time = 0.0
+
+        performance_stats = {
+            "total_time": f"{stats.get('total_time', 0):.2f}s",
+            "avg_response_time": f"{avg_response_time:.2f}s",
+            "min_response_time": f"{min_response_time:.2f}s",
+            "max_response_time": f"{max_response_time:.2f}s",
+            "domains_per_second": f"{(len(detailed_results) / stats.get('total_time', 1)):.2f}" if stats.get('total_time', 0) > 0 else "0"
+        }
+
+        # 平台统计（静态）
+        platform_stats: Dict[str, Dict[str, Any]] = {}
+        for name, p in GamePlatformConfig.get_all_platforms().items():
+            success_count = sum(1 for d in p.domains if d in detailed_results and detailed_results[d].success and detailed_results[d].is_valid_ip)
+            platform_stats[name] = {
+                "static_domains": len(p.domains),
+                "success": success_count,
+                "success_rate": f"{(success_count / len(p.domains) * 100 if p.domains else 0):.1f}%",
+            }
+
+        enhanced = {
+            **base,
+            "performance_stats": performance_stats,
+            "method_stats": method_stats,
+            "resolver_config": resolver_config,
+            "platform_stats": platform_stats,
+        }
+
+        if platform_discovered:
+            enhanced["platform_discovered"] = platform_discovered
+
+        return enhanced
 
 
 def create_statistics_report_content(detailed_results: Dict[str, ResolveResult], stats: Dict[str, float]) -> str:

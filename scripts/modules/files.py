@@ -137,6 +137,7 @@ class FileManager:
         """更新 README.md 中平台域名数量统计表
 
         该方法定位到“支持的游戏平台”表格区域，并将每一行中的“X个域名”替换为传入的实际数量。
+        为避免误匹配，仅在该段落内进行替换。
 
         Args:
             platform_counts: 平台名称到域名数量的映射
@@ -153,22 +154,36 @@ class FileManager:
             return False
 
         import re
-        # 构造每个平台的替换规则，匹配表格行并更新“X个域名”
-        updated_content = content
+        # 锁定“支持的游戏平台”段落范围
+        section_start = re.search(r"^##\s*三、支持的游戏平台\s*$", content, flags=re.MULTILINE)
+        if not section_start:
+            print('未找到“支持的游戏平台”段落标题')
+            return False
+
+        # 查找下一个同级标题，作为段落结束
+        section_end = re.search(r"^##\s+", content[section_start.end():], flags=re.MULTILINE)
+        start_idx = section_start.start()
+        end_idx = section_start.end() + (section_end.start() if section_end else len(content[section_start.end():]))
+
+        prefix = content[:start_idx]
+        section = content[start_idx:end_idx]
+        suffix = content[end_idx:]
+
+        updated_section = section
         for name, count in platform_counts.items():
             # 平台名在 README 中可能有装饰，如加粗或图标，这里仅根据平台关键字匹配行
             # 例如："**Steam** | 7个域名" 或 "Battle.net | 4个域名"
             pattern = rf"(^.*?{re.escape(name)}.*?\|\s*)\d+个域名"
             replacement = rf"\1{count}个域名"
-            updated_content = re.sub(pattern, replacement, updated_content, flags=re.MULTILINE)
+            updated_section = re.sub(pattern, replacement, updated_section, flags=re.MULTILINE)
 
-        if updated_content == content:
+        if updated_section == section:
             print('README 平台域名数量未变化或未匹配到表格行')
             return False
 
         try:
             with open(readme_path, 'w', encoding='utf-8') as f:
-                f.write(updated_content)
+                f.write(prefix + updated_section + suffix)
             print('README 平台域名数量统计已更新')
             return True
         except Exception as e:
