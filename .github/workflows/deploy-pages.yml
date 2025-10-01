@@ -4,9 +4,7 @@ on:
   # 当主分支有推送时触发
   push:
     branches: [ main ]
-    paths:
-      - 'docs/**'
-      - '.github/workflows/deploy-pages.yml'
+    # 取消路径过滤，确保任何推送到 main 都会触发构建与部署
   
   # 允许手动触发
   workflow_dispatch:
