@@ -487,7 +487,8 @@ def update_readme_hosts_block(update_time: str, results: Dict[str, List[str]], c
         if ip:
             lines.append(f"{ip:<27}{domain}")
         else:
-            lines.append(f"{'0.0.0.0':<27}{domain}")
+            # 解析失败或被屏蔽的域名，注释掉该行以避免误阻断
+            lines.append(f"# {'0.0.0.0':<27}{domain}")
     lines.append(f"# Update time: {update_time}")
     lines.append("# Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts")
     lines.append("# Star me: https://github.com/artemisia1107/GameLove")
