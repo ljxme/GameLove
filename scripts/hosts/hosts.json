@@ -1,40 +1,40 @@
 {
   "summary": {
     "total_domains": 29,
-    "success_count": 17,
-    "failed_count": 12,
-    "success_rate": "58.6%",
-    "update_time": "2025-10-02T10:24:57+08:00"
+    "success_count": 16,
+    "failed_count": 13,
+    "success_rate": "55.2%",
+    "update_time": "2025-10-02T11:19:47+08:00"
   },
   "all_hosts": {
-    "epicgames.com": "75.101.241.48",
     "store.steampowered.com": "23.202.153.171",
-    "steamcdn-a.akamaihd.net": "23.215.0.133",
-    "steamstore-a.akamaihd.net": "2.18.67.81",
-    "steamuserimages-a.akamaihd.net": "2.18.67.70",
-    "launcher-public-service-prod06.ol.epicgames.com": "104.18.13.27",
+    "steamstore-a.akamaihd.net": "23.215.0.231",
+    "epicgames.com": "34.192.41.153",
     "unrealengine.com": "3.227.133.49",
-    "help.steampowered.com": "23.214.233.226",
-    "steamcommunity.com": "23.214.233.226",
-    "easyanticheat.net": "104.18.2.180",
-    "fortnite.com": "34.192.41.153",
-    "ea.com": "23.220.130.177",
+    "api.steampowered.com": "23.214.233.226",
+    "help.steampowered.com": "23.1.47.193",
+    "launcher-public-service-prod06.ol.epicgames.com": "104.18.13.27",
+    "steamuserimages-a.akamaihd.net": "2.18.67.79",
+    "easyanticheat.net": "104.18.3.180",
+    "fortnite.com": "54.224.164.236",
+    "origin.com": "23.47.23.244",
     "eaassets-a.akamaihd.net": "23.205.106.164",
-    "ubi.com": "44.209.50.162",
-    "ubisoft.com": "18.67.76.67",
     "battle.net": "166.117.114.163",
-    "gog.com": "151.101.1.55"
+    "blizzard.com": "166.117.114.163",
+    "gog.com": "151.101.65.55",
+    "rockstargames.com": "23.9.157.24"
   },
   "failed_domains": [
-    "api.steampowered.com",
-    "origin.com",
+    "steamcommunity.com",
+    "steamcdn-a.akamaihd.net",
+    "ea.com",
+    "ubi.com",
     "static3.cdn.ubi.com",
+    "ubisoft.com",
     "uplay.com",
     "ssl-lvlt.cdn.ea.com",
-    "blizzard.com",
-    "rockstargames.com",
-    "gogalaxy.com",
     "socialclub.rockstargames.com",
+    "gogalaxy.com",
     "battlenet.com.cn",
     "gog-statics.com",
     "blzstatic.cn"
@@ -45,32 +45,27 @@
     "repository": "https://github.com/artemisia1107/GameLove"
   },
   "performance_stats": {
-    "total_time": "102.29s",
-    "avg_response_time": "0.19s",
+    "total_time": "97.60s",
+    "avg_response_time": "0.23s",
     "min_response_time": "0.01s",
-    "max_response_time": "1.80s",
-    "domains_per_second": "0.28"
+    "max_response_time": "2.13s",
+    "domains_per_second": "0.30"
   },
   "method_stats": {
+    "nslookup": {
+      "success": 12,
+      "failed": 0,
+      "total": 12
+    },
     "doh": {
       "success": 14,
       "failed": 0,
       "total": 14
     },
     "dns": {
-      "success": 3,
-      "failed": 0,
-      "total": 3
-    },
-    "nslookup": {
-      "success": 11,
-      "failed": 0,
-      "total": 11
-    },
-    "ping": {
-      "success": 0,
+      "success": 2,
       "failed": 1,
-      "total": 1
+      "total": 3
     }
   },
   "resolver_config": {
@@ -116,117 +111,117 @@
     }
   },
   "domain_metrics": {
-    "epicgames.com": {
+    "steamcommunity.com": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
-      "chosen_ip": "75.101.241.48"
+      "chosen_ip": "1.1.1.1"
     },
     "store.steampowered.com": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
       "chosen_ip": "23.202.153.171"
     },
-    "steamcdn-a.akamaihd.net": {
-      "consensus": 1,
-      "reachability_score": "0.997",
-      "service_reachable": true,
-      "chosen_ip": "23.215.0.133"
-    },
     "steamstore-a.akamaihd.net": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
-      "chosen_ip": "2.18.67.81"
+      "chosen_ip": "23.215.0.231"
     },
-    "steamuserimages-a.akamaihd.net": {
+    "epicgames.com": {
       "consensus": 1,
-      "reachability_score": "0.997",
-      "service_reachable": true,
-      "chosen_ip": "2.18.67.70"
-    },
-    "launcher-public-service-prod06.ol.epicgames.com": {
-      "consensus": 1,
-      "reachability_score": "0.997",
-      "service_reachable": true,
-      "chosen_ip": "104.18.13.27"
-    },
-    "unrealengine.com": {
-      "consensus": 1,
-      "reachability_score": "0.997",
-      "service_reachable": true,
-      "chosen_ip": "3.227.133.49"
-    },
-    "help.steampowered.com": {
-      "consensus": 1,
-      "reachability_score": "0.997",
-      "service_reachable": true,
-      "chosen_ip": "23.214.233.226"
-    },
-    "api.steampowered.com": {
-      "consensus": 1,
-      "reachability_score": "0.997",
-      "service_reachable": true,
-      "chosen_ip": "1.1.1.1"
-    },
-    "steamcommunity.com": {
-      "consensus": 1,
-      "reachability_score": "0.997",
-      "service_reachable": true,
-      "chosen_ip": "23.214.233.226"
-    },
-    "easyanticheat.net": {
-      "consensus": 1,
-      "reachability_score": "0.997",
-      "service_reachable": true,
-      "chosen_ip": "104.18.2.180"
-    },
-    "fortnite.com": {
-      "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
       "chosen_ip": "34.192.41.153"
     },
-    "ea.com": {
+    "unrealengine.com": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
-      "chosen_ip": "23.220.130.177"
+      "chosen_ip": "3.227.133.49"
     },
-    "origin.com": {
+    "api.steampowered.com": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
+      "service_reachable": true,
+      "chosen_ip": "23.214.233.226"
+    },
+    "help.steampowered.com": {
+      "consensus": 1,
+      "reachability_score": "0.999",
+      "service_reachable": true,
+      "chosen_ip": "23.1.47.193"
+    },
+    "launcher-public-service-prod06.ol.epicgames.com": {
+      "consensus": 1,
+      "reachability_score": "0.999",
+      "service_reachable": true,
+      "chosen_ip": "104.18.13.27"
+    },
+    "steamcdn-a.akamaihd.net": {
+      "consensus": 1,
+      "reachability_score": "0.999",
       "service_reachable": true,
       "chosen_ip": "1.1.1.1"
     },
-    "eaassets-a.akamaihd.net": {
+    "steamuserimages-a.akamaihd.net": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
-      "chosen_ip": "23.205.106.164"
+      "chosen_ip": "2.18.67.79"
+    },
+    "easyanticheat.net": {
+      "consensus": 1,
+      "reachability_score": "0.999",
+      "service_reachable": true,
+      "chosen_ip": "104.18.3.180"
+    },
+    "fortnite.com": {
+      "consensus": 1,
+      "reachability_score": "0.999",
+      "service_reachable": true,
+      "chosen_ip": "54.224.164.236"
+    },
+    "ea.com": {
+      "consensus": 1,
+      "reachability_score": "0.999",
+      "service_reachable": true,
+      "chosen_ip": "1.1.1.1"
     },
     "ubi.com": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
-      "chosen_ip": "44.209.50.162"
+      "chosen_ip": "1.1.1.1"
+    },
+    "origin.com": {
+      "consensus": 1,
+      "reachability_score": "0.999",
+      "service_reachable": true,
+      "chosen_ip": "23.47.23.244"
+    },
+    "eaassets-a.akamaihd.net": {
+      "consensus": 1,
+      "reachability_score": "0.999",
+      "service_reachable": true,
+      "chosen_ip": "23.205.106.164"
     },
     "static3.cdn.ubi.com": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
       "chosen_ip": "1.1.1.1"
     },
     "ubisoft.com": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
-      "chosen_ip": "18.67.76.67"
+      "chosen_ip": "1.1.1.1"
     },
     "uplay.com": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
       "chosen_ip": "1.1.1.1"
     },
@@ -238,61 +233,61 @@
     },
     "battle.net": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
       "chosen_ip": "166.117.114.163"
     },
     "blizzard.com": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
-      "chosen_ip": "1.1.1.1"
+      "chosen_ip": "166.117.114.163"
     },
     "gog.com": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
-      "chosen_ip": "151.101.1.55"
+      "chosen_ip": "151.101.65.55"
     },
     "rockstargames.com": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
+      "service_reachable": true,
+      "chosen_ip": "23.9.157.24"
+    },
+    "socialclub.rockstargames.com": {
+      "consensus": 1,
+      "reachability_score": "0.999",
       "service_reachable": true,
       "chosen_ip": "1.1.1.1"
     },
     "gogalaxy.com": {
       "consensus": 1,
-      "reachability_score": "0.997",
-      "service_reachable": true,
-      "chosen_ip": "1.1.1.1"
-    },
-    "socialclub.rockstargames.com": {
-      "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
       "chosen_ip": "1.1.1.1"
     },
     "battlenet.com.cn": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
       "chosen_ip": "1.1.1.1"
     },
     "gog-statics.com": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
       "chosen_ip": "1.1.1.1"
     },
     "blzstatic.cn": {
       "consensus": 1,
-      "reachability_score": "0.997",
+      "reachability_score": "0.999",
       "service_reachable": true,
       "chosen_ip": "1.1.1.1"
     }
   },
   "quality_aggregates": {
-    "reachability_avg": "0.963",
+    "reachability_avg": "0.965",
     "consensus_avg": "1.000"
   },
   "platforms": {

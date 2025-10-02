@@ -30,30 +30,29 @@
 
 ```
 # GameLove Host Start
+23.214.233.226                 api.steampowered.com
 166.117.114.163                battle.net
-23.220.130.177                 ea.com
+166.117.114.163                blizzard.com
 23.205.106.164                 eaassets-a.akamaihd.net
-104.18.2.180                   easyanticheat.net
-75.101.241.48                  epicgames.com
-34.192.41.153                  fortnite.com
-151.101.1.55                   gog.com
-23.214.233.226                 help.steampowered.com
+104.18.3.180                   easyanticheat.net
+34.192.41.153                  epicgames.com
+54.224.164.236                 fortnite.com
+151.101.65.55                  gog.com
+23.1.47.193                    help.steampowered.com
 104.18.13.27                   launcher-public-service-prod06.ol.epicgames.com
-23.215.0.133                   steamcdn-a.akamaihd.net
-23.214.233.226                 steamcommunity.com
-2.18.67.81                     steamstore-a.akamaihd.net
-2.18.67.70                     steamuserimages-a.akamaihd.net
+23.47.23.244                   origin.com
+23.9.157.24                    rockstargames.com
+23.215.0.231                   steamstore-a.akamaihd.net
+2.18.67.79                     steamuserimages-a.akamaihd.net
 23.202.153.171                 store.steampowered.com
-44.209.50.162                  ubi.com
-18.67.76.67                    ubisoft.com
 3.227.133.49                   unrealengine.com
-# Update time: 2025-10-02T10:24:57+08:00
+# Update time: 2025-10-02T11:19:47+08:00
 # Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts
 # Star me: https://github.com/artemisia1107/GameLove
 # GameLove Host End
 ```
 
-该内容会自动定时更新，数据更新时间：2025-10-02T10:24:57+08:00
+该内容会自动定时更新，数据更新时间：2025-10-02T11:19:47+08:00
 
 #### 2.1.2 修改 hosts 文件
 
@@ -154,9 +153,9 @@ rm "$_hosts"
 3. 定期手动检查更新
 
 ### 质量指标汇总
-- 平均可达性评分：0.963
+- 平均可达性评分：0.965
 - 平均共识值：1.000
-- 数据更新时间：2025-10-02T10:24:57+08:00
+- 数据更新时间：2025-10-02T11:19:47+08:00
 ## 六、常见问题
 
 ### Q: 为什么有些游戏还是很慢？
