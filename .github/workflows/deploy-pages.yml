@@ -7,6 +7,9 @@ on:
     paths:
       # 仅当 docs 目录发生变化时触发 Pages 构建/部署
       - 'docs/**'
+      # 数据文件变化也触发，以确保前端重新构建并部署最新代码
+      - 'hosts.json'
+      - 'scripts/hosts/**'
       # 工作流自身变更也应触发，以验证配置
       - '.github/workflows/deploy-pages.yml'
   

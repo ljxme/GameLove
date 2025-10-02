@@ -192,20 +192,30 @@ class HostsConnectivityChecker {
     private async loadHostsData(): Promise<void> {
         try {
             // 尝试从远程API加载数据（修正为正确的 RAW 路径）
-            const response = await fetch('https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts.json', { cache: 'no-store' });
+            const primaryUrl = 'https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts.json';
+            const backupUrl = 'https://cdn.jsdelivr.net/gh/artemisia1107/GameLove@main/hosts.json';
+            const response = await fetch(primaryUrl, { cache: 'no-store' });
             if (response.ok) {
                 const hostsData = await response.json();
                 this.parseHostsData(hostsData);
             } else {
-                throw new Error(`Failed to load remote data: ${response.status} ${response.statusText}`);
+                console.warn(`主数据源失败: ${response.status} ${response.statusText} -> 尝试备用源`);
+                const backup = await fetch(backupUrl, { cache: 'no-store' });
+                if (backup.ok) {
+                    const hostsData = await backup.json();
+                    this.parseHostsData(hostsData);
+                    return;
+                }
+                throw new Error(`主/备数据源均失败: primary ${response.status} ${response.statusText}, backup ${backup.status} ${backup.statusText}`);
             }
         } catch (error) {
-            console.warn('Failed to load remote hosts data, using local test data:', error);
+            console.warn('远程 hosts 数据加载失败，将使用本地测试数据:', error);
             // 使用本地测试数据作为后备
             try {
                 const localData = this.getLocalTestData();
                 this.parseHostsData(localData);
             } catch (localError) {
+                console.error('本地数据解析失败:', localError);
                 this.showError('无法加载hosts数据，请检查网络连接');
             }
         }
