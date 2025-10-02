@@ -30,39 +30,22 @@
 
 ```
 # GameLove Host Start
-23.210.138.105                 api.steampowered.com
+104.68.104.163                 api.steampowered.com
 166.117.214.166                battle.net
-120.55.44.14                   battlenet.com.cn
 166.117.114.163                blizzard.com
-184.31.100.194                 ea.com
-23.32.45.25                    eaassets-a.akamaihd.net
-104.18.2.180                   easyanticheat.net
-35.169.179.193                 epicgames.com
-75.101.241.48                  fortnite.com
-151.101.193.55                 gog.com
-77.79.249.112                  gogalaxy.com
-23.210.138.105                 help.steampowered.com
-104.18.12.27                   launcher-public-service-prod06.ol.epicgames.com
-23.61.23.194                   origin.com
-23.9.157.24                    rockstargames.com
-104.255.105.71                 socialclub.rockstargames.com
-23.54.41.64                    static3.cdn.ubi.com
-23.54.76.44                    steamcdn-a.akamaihd.net
-23.210.138.105                 steamcommunity.com
-23.32.45.36                    steamstore-a.akamaihd.net
-23.32.45.35                    steamuserimages-a.akamaihd.net
-23.78.8.100                    store.steampowered.com
-3.95.49.241                    ubi.com
-3.168.102.81                   ubisoft.com
-3.227.133.49                   unrealengine.com
-34.249.82.244                  uplay.com
-# Update time: 2025-10-02T17:19:30+08:00
+104.107.106.198                ea.com
+104.18.3.180                   easyanticheat.net
+151.101.1.55                   gog.com
+104.79.0.49                    steamcdn-a.akamaihd.net
+23.67.33.85                    steamuserimages-a.akamaihd.net
+104.99.49.179                  store.steampowered.com
+# Update time: 2025-10-02T09:29:15+08:00
 # Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts
 # Star me: https://github.com/artemisia1107/GameLove
 # GameLove Host End
 ```
 
-该内容会自动定时更新，数据更新时间：2025-10-02T17:19:30+08:00
+该内容会自动定时更新，数据更新时间：2025-10-02T09:29:15+08:00
 
 #### 2.1.2 修改 hosts 文件
 
@@ -163,9 +146,9 @@ rm "$_hosts"
 3. 定期手动检查更新
 
 ### 质量指标汇总
-- 平均可达性评分：0.816
+- 平均可达性评分：0.965
 - 平均共识值：1.000
-- 数据更新时间：2025-10-02T17:19:30+08:00
+- 数据更新时间：2025-10-02T09:29:15+08:00
 ## 六、常见问题
 
 ### Q: 为什么有些游戏还是很慢？
