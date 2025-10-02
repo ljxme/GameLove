@@ -30,30 +30,44 @@
 #### 2.1.1 复制下面的内容
 
 ```
+
 # GameLove Host Start
-23.214.233.226                 api.steampowered.com
-166.117.114.163                battle.net
-166.117.114.163                blizzard.com
-23.205.106.164                 eaassets-a.akamaihd.net
-104.18.3.180                   easyanticheat.net
-34.192.41.153                  epicgames.com
-54.224.164.236                 fortnite.com
-151.101.65.55                  gog.com
-23.1.47.193                    help.steampowered.com
-104.18.13.27                   launcher-public-service-prod06.ol.epicgames.com
-23.47.23.244                   origin.com
-23.9.157.24                    rockstargames.com
-23.215.0.231                   steamstore-a.akamaihd.net
-2.18.67.79                     steamuserimages-a.akamaihd.net
-23.202.153.171                 store.steampowered.com
-3.227.133.49                   unrealengine.com
-# Update time: 2025-10-02T11:19:47+08:00
+23.204.10.89               steamcommunity.com
+23.50.124.114              store.steampowered.com
+23.204.10.89               api.steampowered.com
+23.214.233.226             help.steampowered.com
+104.96.220.106             steamcdn-a.akamaihd.net
+23.44.201.233              steamuserimages-a.akamaihd.net
+23.44.201.229              steamstore-a.akamaihd.net
+104.18.12.27               launcher-public-service-prod06.ol.epicgames.com
+3.210.250.97               epicgames.com
+3.227.133.49               unrealengine.com
+3.210.250.97               fortnite.com
+104.18.3.180               easyanticheat.net
+23.213.79.115              origin.com
+23.56.162.193              ea.com
+23.219.155.53              eaassets-a.akamaihd.net
+18.67.76.84                ubisoft.com
+44.209.50.162              ubi.com
+52.31.3.176                uplay.com
+23.43.44.232               static3.cdn.ubi.com
+166.117.114.163            battle.net
+166.117.114.163            blizzard.com
+118.31.19.38               battlenet.com.cn
+0.0.0.0                    blzstatic.cn
+151.101.1.55               gog.com
+0.0.0.0                    gog-statics.com
+77.79.249.114              gogalaxy.com
+96.7.20.214                rockstargames.com
+104.255.105.71             socialclub.rockstargames.com
+# Update time: 2025-10-02T20:47:29+08:00
 # Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts
 # Star me: https://github.com/artemisia1107/GameLove
 # GameLove Host End
+
 ```
 
-该内容会自动定时更新，数据更新时间：2025-10-02T11:19:47+08:00
+该内容会自动定时更新，数据更新时间：2025-10-02T20:47:29+08:00
 
 #### 2.1.2 修改 hosts 文件
 
@@ -279,7 +293,7 @@ A: 当然！欢迎提交 Issue 或 Pull Request 添加新的游戏平台支持�
 
 ```
 
-该内容会自动定时更新，数据更新时间：2025-10-02T20:40:15+08:00
+该内容会自动定时更新，数据更新时间：2025-10-02T20:47:29+08:00
 
 #### 2.1.2 修改 hosts 文件
 
