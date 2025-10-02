@@ -11,6 +11,7 @@ GameLove Hosts 更新工具 - 模块化重构版本
 import argparse
 import time
 import os
+import socket
 from typing import Dict, List, Tuple, Any
 
 # 指定 DNS 解析服务器列表（按优先级）
@@ -20,6 +21,31 @@ DNS_SERVER_LIST = [
     "101.101.101.101",    # Quad101 DNS (台湾)
     "101.102.103.104",    # Quad101 DNS (台湾备用)
 ]
+
+# 常见公共 DNS（用于黑名单，避免误写入 hosts）
+COMMON_PUBLIC_DNS = {
+    "8.8.4.4",            # Google Public DNS secondary
+    "1.0.0.1",            # Cloudflare DNS secondary
+    "9.9.9.9",            # Quad9
+    "149.112.112.112",    # Quad9 secondary
+    "208.67.222.222",     # OpenDNS
+    "208.67.220.220",     # OpenDNS
+    "114.114.114.114",    # 114DNS（中国）
+    "114.114.115.115",    # 114DNS 备用
+    "223.5.5.5",          # AliDNS
+    "223.6.6.6",          # AliDNS 备用
+    "119.29.29.29",       # DNSPod（腾讯）
+    "180.76.76.76",       # BaiduDNS
+    "1.12.12.12",         # TencentDNS
+    "4.2.2.1",            # Level3/CenturyLink
+    "4.2.2.2",
+    "4.2.2.3",
+    "4.2.2.4",
+    "4.2.2.5",
+    "4.2.2.6",
+}
+
+DNS_SERVER_KNOWN = set(DNS_SERVER_LIST) | COMMON_PUBLIC_DNS | {"127.0.0.53", "127.0.0.1"}
 
 # 模块化导入（解析器、平台配置、内容与文件管理）
 from modules.resolvers import (
@@ -157,8 +183,18 @@ class GameLoveHostsUpdater:
         
         for domain, result in detailed_results.items():
             if result.success and result.ip and result.is_valid_ip:
-                ip_dict[domain] = result.ip
-                self.stats['success_count'] += 1
+                # 过滤掉 DNS 服务器地址，避免写入 hosts
+                if self._is_dns_server_ip(result.ip):
+                    failed_domains.append(domain)
+                    self.stats['failed_count'] += 1
+                else:
+                    # 在写入前进行服务连通性校验（80/443 端口）
+                    if self._is_service_reachable(result.ip):
+                        ip_dict[domain] = result.ip
+                        self.stats['success_count'] += 1
+                    else:
+                        failed_domains.append(domain)
+                        self.stats['failed_count'] += 1
             else:
                 failed_domains.append(domain)
                 self.stats['failed_count'] += 1
@@ -182,7 +218,10 @@ class GameLoveHostsUpdater:
         if result.success and result.ip and result.is_valid_ip:
             method_str = f"({result.method.value})" if result.method else ""
             time_str = f" [{result.response_time:.2f}s]" if result.response_time else ""
-            print(f"✅ {domain:<40} -> {result.ip:<15} {method_str}{time_str}")
+            reachable = self._is_service_reachable(result.ip)
+            reach_str = "" if reachable else " [服务不可达]"
+            dns_str = " [DNS服务器IP]" if self._is_dns_server_ip(result.ip) else ""
+            print(f"✅ {domain:<40} -> {result.ip:<15} {method_str}{time_str}{reach_str}{dns_str}")
         elif result.success and result.ip and not result.is_valid_ip:
             method_str = f"({result.method.value})" if result.method else ""
             time_str = f" [{result.response_time:.2f}s]" if result.response_time else ""
@@ -362,6 +401,46 @@ class GameLoveHostsUpdater:
             print(f"\n❌ 程序执行出错: {e}")
             import traceback
             traceback.print_exc()
+
+    def _is_dns_server_ip(self, ip: str) -> bool:
+        """判断是否为 DNS 服务器地址（避免写入 hosts）
+        
+        规则：
+        - 属于配置的上游 DNS 列表或常见公共 DNS
+        - 常见本机 stub/loopback DNS：127.0.0.53, 127.0.0.1
+        
+        Args:
+            ip: 待检测的 IP
+        Returns:
+            bool: 是 DNS 服务器地址返回 True
+        """
+        try:
+            if ip in DNS_SERVER_KNOWN:
+                return True
+        except Exception:
+            pass
+        return False
+
+    def _is_service_reachable(self, ip: str, ports: List[int] = [443, 80], timeout: float = 0.8) -> bool:
+        """检查目标 IP 的常用服务端口是否可达
+        
+        Args:
+            ip: 目标 IP 地址
+            ports: 检查的端口列表（默认 443/80）
+            timeout: 单次连接超时秒数
+        Returns:
+            bool: 任意端口可达则为 True
+        """
+        try:
+            for port in ports:
+                try:
+                    with socket.create_connection((ip, port), timeout=timeout):
+                        return True
+                except Exception:
+                    continue
+        except Exception:
+            pass
+        return False
 
 
 def main():
