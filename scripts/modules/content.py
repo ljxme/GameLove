@@ -183,6 +183,21 @@ class ContentGenerator:
             "quality_aggregates": quality_aggregates,
         }
 
+        # 前端展示所需的平台域名结构（与 docs/src/main.ts 解析一致）
+        # 使用小写键名，并合并发现的新域名（若有），去重保持顺序
+        platforms_payload: Dict[str, Any] = {}
+        for name, p in GamePlatformConfig.get_all_platforms().items():
+            key = name.lower()
+            base_domains = list(p.domains)
+            if platform_discovered and name in platform_discovered:
+                # 合并静态与发现域名，去重
+                merged = list(dict.fromkeys(base_domains + platform_discovered[name]))
+                platforms_payload[key] = {"domains": merged}
+            else:
+                platforms_payload[key] = {"domains": base_domains}
+
+        enhanced["platforms"] = platforms_payload
+
         if platform_discovered:
             enhanced["platform_discovered"] = platform_discovered
 

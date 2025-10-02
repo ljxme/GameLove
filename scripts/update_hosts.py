@@ -139,14 +139,15 @@ class GameLoveHostsUpdater:
         self.discovery_strategies = discovery_strategies or ["pattern"]
         self.rate_limit = rate_limit
         self.discovery_timeout = discovery_timeout
-        
-        # 初始化解析器
-        self._init_resolvers(use_smart_resolver)
-        
+
         # 初始化其他组件（使用模块化实现）
         self.content_generator = C_ContentGenerator()
         self.file_manager = F_FileManager()
+        # 先初始化稳定缓存，供解析器使用
         self.stable_cache = Cache_StableCache()
+
+        # 初始化解析器（依赖 stable_cache）
+        self._init_resolvers(use_smart_resolver)
         self.discovery: DomainDiscovery | None = None
         self.platform_discovered: Dict[str, List[str]] = {}
         
