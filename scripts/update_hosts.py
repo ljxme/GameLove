@@ -204,12 +204,15 @@ def load_platform_domains() -> Dict[str, Dict[str, List[str]]]:
         "steam": {
             "domains": [
                 "steamcommunity.com",
+                "www.steamcommunity.com",
                 "store.steampowered.com",
                 "api.steampowered.com",
-                "help.steampowered.com",
                 "steamcdn-a.akamaihd.net",
-                "steamuserimages-a.akamaihd.net",
-                "steamstore-a.akamaihd.net",
+                "cdn.akamai.steamstatic.com",
+                "community.akamai.steamstatic.com",
+                "store.akamai.steamstatic.com",
+                "cdn.cloudflare.steamstatic.com",
+                "steam-chat.com",
             ]
         },
         "epic": {
@@ -273,8 +276,15 @@ def format_hosts_lines(pairs: List[Tuple[str, str]]) -> List[str]:
     return lines
 
 
-def write_hosts_files(all_pairs: List[Tuple[str, str]], per_platform: Dict[str, List[Tuple[str, str]]], update_time: str) -> None:
-    """生成根 hosts、scripts/hosts/hosts 以及平台专用 hosts 文件。"""
+def write_hosts_files(
+    all_pairs: List[Tuple[str, str]],
+    per_platform: Dict[str, List[Tuple[str, str]]],
+    update_time: str,
+    failed_per_platform: Optional[Dict[str, List[str]]] = None,
+) -> None:
+    """生成根 hosts、scripts/hosts/hosts 以及平台专用 hosts 文件。
+    若提供 failed_per_platform，则在各平台文件末尾追加失败域名的提示性注释。
+    """
     os.makedirs(SCRIPTS_HOSTS_DIR, exist_ok=True)
 
     header = ["# GameLove Host Start"]
@@ -285,9 +295,18 @@ def write_hosts_files(all_pairs: List[Tuple[str, str]], per_platform: Dict[str, 
         "# GameLove Host End",
     ]
 
-    def write_one(path: str, pairs: List[Tuple[str, str]]):
+    def write_one(path: str, pairs: List[Tuple[str, str]], failed_domains: Optional[List[str]] = None):
+        body_lines = header + format_hosts_lines(pairs)
+        if failed_domains:
+            body_lines += ['']
+            body_lines += [
+                '# Below are unresolved/failed domains (informational only, commented):'
+            ]
+            for d in failed_domains:
+                body_lines.append(f"# {'0.0.0.0':<27}{d}")
+        body_lines += [''] + footer + ['']
         with open(path, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(header + format_hosts_lines(pairs) + [''] + footer + ['']))
+            f.write('\n'.join(body_lines))
 
     # 根 hosts
     write_one(ROOT_HOSTS_PATH, all_pairs)
@@ -299,7 +318,8 @@ def write_hosts_files(all_pairs: List[Tuple[str, str]], per_platform: Dict[str, 
         # 将点替换为下划线或保留特殊文件名（如 battle.net 用 hosts_battle.net）
         file_key = pk.replace('.', '_') if pk != 'battle.net' else 'battle.net'
         path = os.path.join(SCRIPTS_HOSTS_DIR, f"hosts_{file_key}")
-        write_one(path, pairs)
+        failed = (failed_per_platform or {}).get(pk) or []
+        write_one(path, pairs, failed_domains=failed)
 
 
 def build_hosts_json(
@@ -543,6 +563,7 @@ def main() -> None:
     # 汇总全部与分平台的 IP->域名对（使用选择策略后的 IP）
     all_pairs: List[Tuple[str, str]] = []
     per_platform: Dict[str, List[Tuple[str, str]]] = {pk: [] for pk in platforms.keys()}
+    failed_per_platform: Dict[str, List[str]] = {pk: [] for pk in platforms.keys()}
     for pk, v in platforms.items():
         for domain in v.get('domains', []):
             ips = results.get(domain) or []
@@ -550,9 +571,11 @@ def main() -> None:
                 ip = chosen.get(domain, (None, None, False))[0] or ips[0]
                 all_pairs.append((ip, domain))
                 per_platform[pk].append((ip, domain))
+            else:
+                failed_per_platform[pk].append(domain)
 
-    # 写入 hosts 文件们
-    write_hosts_files(all_pairs, per_platform, update_time)
+    # 写入 hosts 文件们（平台文件末尾附加失败域名注释）
+    write_hosts_files(all_pairs, per_platform, update_time, failed_per_platform)
 
     # 写入 JSON 文件（根与 scripts/hosts）
     data = build_hosts_json(platforms, results, chosen, update_time, total_time)
