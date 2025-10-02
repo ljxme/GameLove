@@ -183,11 +183,13 @@ class NslookupResolver(IPResolver):
 
 
 class ConnectivityTester:
-    """连通性测试器：测量 ping 延迟并选择最低延迟 IP"""
+    """连通性测试器：测量 TCP 连接耗时/端口可达与 ping 延迟"""
 
-    def __init__(self, ping_timeout: int = 3, ping_count: int = 1):
+    def __init__(self, ping_timeout: int = 3, ping_count: int = 1, tcp_timeout: float = 1.5, service_ports: Optional[List[int]] = None):
         self.ping_timeout = ping_timeout
         self.ping_count = ping_count
+        self.tcp_timeout = tcp_timeout
+        self.service_ports = service_ports or [443, 80]
 
     def measure_ping_time(self, ip: str) -> Optional[float]:
         """测量指定 IP 的平均 ping 延迟（秒），失败返回 None"""
@@ -215,14 +217,42 @@ class ConnectivityTester:
         except Exception:
             return None
 
+    def measure_tcp_connect_time(self, ip: str) -> Optional[float]:
+        """测量到指定 IP 在优先端口上的 TCP 连接耗时（秒），失败返回 None
+
+        优先尝试 443，再尝试 80；任一端口成功则返回对应耗时。
+        """
+        for port in self.service_ports:
+            start = time.time()
+            try:
+                with socket.create_connection((ip, port), timeout=self.tcp_timeout):
+                    return time.time() - start
+            except Exception:
+                continue
+        return None
+
+    def is_service_reachable(self, ip: str) -> bool:
+        """判断服务端口是否可达（80/443 任一可达即认为可达）"""
+        for port in self.service_ports:
+            try:
+                with socket.create_connection((ip, port), timeout=self.tcp_timeout):
+                    return True
+            except Exception:
+                continue
+        return False
+
     def choose_best(self, domain: str, candidates: List[ResolveResult]) -> ResolveResult:
-        """在多个成功候选中选择延迟最低的结果"""
+        """在多个成功候选中选择综合质量最优（优先TCP耗时，其次Ping，其次解析耗时）"""
         best: Optional[Tuple[ResolveResult, float]] = None
         for cand in candidates:
             if not cand.ip:
                 continue
-            latency = self.measure_ping_time(cand.ip)
-            score = latency if latency is not None else (cand.response_time or float('inf'))
+            connect_time = self.measure_tcp_connect_time(cand.ip)
+            if connect_time is not None:
+                score = connect_time
+            else:
+                latency = self.measure_ping_time(cand.ip)
+                score = latency if latency is not None else (cand.response_time or float('inf'))
             if best is None or score < best[1]:
                 best = (cand, score)
         return best[0] if best else candidates[0]
@@ -252,9 +282,12 @@ class SmartResolver(IPResolver):
                     break
                 if attempt < self.max_retries:
                     time.sleep(0.5)
+        # 若有成功候选，按需扩展更多 IP 并进行优选
         if success_candidates:
-            if self.prefer_fastest and len(success_candidates) > 1:
-                return self.tester.choose_best(domain, success_candidates)
+            if self.prefer_fastest:
+                augmented = self._collect_additional_candidates(domain, success_candidates)
+                if augmented:
+                    return self.tester.choose_best(domain, augmented)
             return success_candidates[0]
         return best_result or ResolveResult(domain, None, None, False, error='All resolvers failed')
 
@@ -269,6 +302,24 @@ class SmartResolver(IPResolver):
         if not a.success and not b.success:
             return (a.response_time or float('inf')) < (b.response_time or float('inf'))
         return False
+
+    def _collect_additional_candidates(self, domain: str, base: List[ResolveResult]) -> List[ResolveResult]:
+        """收集额外候选 IP：基于 getaddrinfo 获取所有 A 记录，并与已有候选去重"""
+        # 已有 IP 集合
+        existing: Dict[str, ResolveResult] = {r.ip: r for r in base if r.ip}
+        # 尝试通过 socket.getaddrinfo 获取更多 IPv4 地址
+        try:
+            infos = socket.getaddrinfo(domain, None, family=socket.AF_INET)
+            for info in infos:
+                ip = info[4][0]
+                if ip not in existing:
+                    rr = ResolveResult(domain=domain, ip=ip, method=ResolveMethod.DNS, success=True, response_time=None)
+                    if rr.is_valid_ip:
+                        existing[ip] = rr
+        except Exception:
+            # 忽略扩展失败
+            pass
+        return list(existing.values())
 
 
 class CompositeResolver(IPResolver):
