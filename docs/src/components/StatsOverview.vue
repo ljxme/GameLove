@@ -52,5 +52,4 @@
 // 保持 ID 以兼容 main.ts 的 UI 更新逻辑
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

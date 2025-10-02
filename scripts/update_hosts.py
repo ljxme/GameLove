@@ -1,22 +1,13 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-GameLove Hosts 更新工具 - 模块化重构版本
-
-该工具用于自动更新游戏平台的hosts文件，优化网络连接。
-采用模块化设计，提升代码的可维护性、可扩展性和易读性。
-
-"""
-
-import argparse
-import time
 import os
+import json
 import socket
-from typing import Dict, List, Tuple, Any
-import requests
-from requests.adapters import HTTPAdapter
+import random
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone, timedelta
+from typing import Dict, List, Tuple, Optional
 
-# 指定 DNS 解析服务器列表（按优先级）
+# 指定的 DNS 解析服务器列表（按优先级顺序）
 DNS_SERVER_LIST = [
     "1.1.1.1",            # Cloudflare DNS
     "8.8.8.8",            # Google Public DNS
@@ -24,561 +15,554 @@ DNS_SERVER_LIST = [
     "101.102.103.104",    # Quad101 DNS (台湾备用)
 ]
 
-# 公共 DoH 接口（用于多来源解析对比）
-DOH_ENDPOINTS = [
-    "https://cloudflare-dns.com/dns-query",  # Cloudflare DoH JSON
-    "https://dns.google/resolve",            # Google DoH JSON
+# 并发解析配置
+MAX_WORKERS = 10  # 可根据需要调整并发度
+
+# 项目路径（相对脚本所在位置）
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+ROOT_HOSTS_PATH = os.path.join(PROJECT_ROOT, "hosts")
+ROOT_JSON_PATH = os.path.join(PROJECT_ROOT, "hosts.json")
+SCRIPTS_DIR = os.path.join(PROJECT_ROOT, "scripts")
+SCRIPTS_HOSTS_DIR = os.path.join(SCRIPTS_DIR, "hosts")
+SCRIPTS_HOSTS_PATH = os.path.join(SCRIPTS_HOSTS_DIR, "hosts")
+SCRIPTS_JSON_PATH = os.path.join(SCRIPTS_HOSTS_DIR, "hosts.json")
+README_PATH = os.path.join(PROJECT_ROOT, "README.md")
+
+
+def _encode_dns_query(domain: str, qtype: int = 1) -> bytes:
+    """构造一个最简 DNS 查询报文（仅支持 A 记录）。
+
+    Args:
+        domain: 查询的域名
+        qtype: 查询类型，默认 1(A)
+
+    Returns:
+        原始 UDP 报文 bytes
+    """
+    # Header
+    ident = random.getrandbits(16)
+    flags = 0x0100  # 标准查询，递归可用
+    qdcount = 1
+    ancount = 0
+    nscount = 0
+    arcount = 0
+    header = ident.to_bytes(2, "big") + flags.to_bytes(2, "big") + \
+             qdcount.to_bytes(2, "big") + ancount.to_bytes(2, "big") + \
+             nscount.to_bytes(2, "big") + arcount.to_bytes(2, "big")
+
+    # Question
+    parts = domain.strip('.').split('.')
+    qname = b''.join(len(p).to_bytes(1, 'big') + p.encode('utf-8') for p in parts) + b'\x00'
+    qclass = 1  # IN
+    question = qname + qtype.to_bytes(2, 'big') + qclass.to_bytes(2, 'big')
+
+    return header + question
+
+
+def _parse_dns_response_for_a(resp: bytes) -> List[str]:
+    """解析 DNS 响应，提取 A 记录 IP 列表。"""
+    if len(resp) < 12:
+        return []
+    # 解析头部
+    qdcount = int.from_bytes(resp[4:6], 'big')
+    ancount = int.from_bytes(resp[6:8], 'big')
+
+    # 跳过 Question 区
+    idx = 12
+    for _ in range(qdcount):
+        # 读取 QNAME（标签序列）
+        while True:
+            if idx >= len(resp):
+                return []
+            l = resp[idx]
+            idx += 1
+            if l == 0:
+                break
+            idx += l
+        # 跳过 QTYPE + QCLASS
+        idx += 4
+
+    ips: List[str] = []
+    # 读取 Answer RRs
+    for _ in range(ancount):
+        if idx + 10 > len(resp):
+            break
+        # NAME（可能是压缩指针，两字节）
+        # 如果是指针，前两位为 11，长度为两字节；否则为标签序列。
+        name_len_or_ptr = resp[idx]
+        if (name_len_or_ptr & 0xC0) == 0xC0:
+            # 压缩指针，跳过两字节
+            idx += 2
+        else:
+            # 标签序列
+            while True:
+                l = resp[idx]
+                idx += 1
+                if l == 0:
+                    break
+                idx += l
+
+        rtype = int.from_bytes(resp[idx:idx+2], 'big'); idx += 2
+        rclass = int.from_bytes(resp[idx:idx+2], 'big'); idx += 2
+        # TTL
+        idx += 4
+        rdlen = int.from_bytes(resp[idx:idx+2], 'big'); idx += 2
+        if idx + rdlen > len(resp):
+            break
+
+        if rtype == 1 and rclass == 1 and rdlen == 4:
+            ip_bytes = resp[idx:idx+4]
+            ips.append('.'.join(str(b) for b in ip_bytes))
+        # 跳到下一个 RR
+        idx += rdlen
+
+    return ips
+
+
+def resolve_domain(domain: str, servers: List[str], timeout: float = 2.0) -> List[str]:
+    """使用给定 DNS 服务器按序解析域名的 A 记录，返回 IP 列表。"""
+    query = _encode_dns_query(domain, qtype=1)
+    for server in servers:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                s.settimeout(timeout)
+                s.sendto(query, (server, 53))
+                resp, _ = s.recvfrom(2048)
+            ips = _parse_dns_response_for_a(resp)
+            if ips:
+                return ips
+        except Exception:
+            continue
+    return []
+
+
+def measure_ip_latency(ip: str, ports: List[int] = [443, 80], timeout: float = 1.0) -> Optional[float]:
+    """尝试与给定 IP 的常用端口建立 TCP 连接，返回最短连接时间（秒）。"""
+    best: Optional[float] = None
+    for port in ports:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(timeout)
+        t0 = time.perf_counter()
+        try:
+            s.connect((ip, port))
+            dt = time.perf_counter() - t0
+            if best is None or dt < best:
+                best = dt
+        except Exception:
+            pass
+        finally:
+            try:
+                s.close()
+            except Exception:
+                pass
+    return best
+
+
+def choose_best_ip(ips: List[str]) -> Tuple[Optional[str], Optional[float], bool]:
+    """在解析出的多个 IP 中选择优质 IP：优先可达、其次最低连接时延。"""
+    best_ip: Optional[str] = None
+    best_latency: Optional[float] = None
+    reachable = False
+    for ip in ips:
+        lat = measure_ip_latency(ip)
+        if lat is not None:
+            reachable = True
+            if best_latency is None or lat < best_latency:
+                best_latency = lat
+                best_ip = ip
+    # 如无可达 IP，退回第一个解析 IP（不可达标记）
+    if not reachable and ips:
+        best_ip = ips[0]
+    return best_ip, best_latency, reachable
+
+
+def load_platform_domains() -> Dict[str, Dict[str, List[str]]]:
+    """加载各平台域名列表。
+    优先从根目录 hosts.json 的 platforms 字段读取；若不可用，则使用脚本内置回退。
+    返回结构：{ platform_key: { "domains": [domain1, ...] } }
+    """
+    # 尝试从现有 hosts.json 读取
+    if os.path.exists(ROOT_JSON_PATH):
+        try:
+            with open(ROOT_JSON_PATH, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            platforms = data.get('platforms')
+            if isinstance(platforms, dict):
+                # 规范化为仅保留 domains 数组
+                result: Dict[str, Dict[str, List[str]]] = {}
+                for k, v in platforms.items():
+                    arr = v.get('domains') if isinstance(v, dict) else None
+                    if isinstance(arr, list) and all(isinstance(x, str) for x in arr):
+                        result[k] = { 'domains': arr }
+                if result:
+                    return result
+        except Exception:
+            pass
+
+    # 内置回退（与当前仓库 hosts.json 中平台域名保持一致）
+    return {
+        "steam": {
+            "domains": [
+                "steamcommunity.com",
+                "store.steampowered.com",
+                "api.steampowered.com",
+                "help.steampowered.com",
+                "steamcdn-a.akamaihd.net",
+                "steamuserimages-a.akamaihd.net",
+                "steamstore-a.akamaihd.net",
+            ]
+        },
+        "epic": {
+            "domains": [
+                "launcher-public-service-prod06.ol.epicgames.com",
+                "epicgames.com",
+                "unrealengine.com",
+                "fortnite.com",
+                "easyanticheat.net",
+            ]
+        },
+        "origin": {
+            "domains": [
+                "origin.com",
+                "ea.com",
+                "eaassets-a.akamaihd.net",
+            ]
+        },
+        "uplay": {
+            "domains": [
+                "ubisoft.com",
+                "ubi.com",
+                "uplay.com",
+                "static3.cdn.ubi.com",
+            ]
+        },
+        "battle.net": {
+            "domains": [
+                "battle.net",
+                "blizzard.com",
+                "battlenet.com.cn",
+                "blzstatic.cn",
+            ]
+        },
+        "gog": {
+            "domains": [
+                "gog.com",
+                "gog-statics.com",
+                "gogalaxy.com",
+            ]
+        },
+        "rockstar": {
+            "domains": [
+                "rockstargames.com",
+                "socialclub.rockstargames.com",
+            ]
+        },
+    }
+
+
+def now_iso_cn() -> str:
+    """按东八区生成 ISO 时间字符串（到秒）。"""
+    return datetime.now(timezone(timedelta(hours=8))).isoformat(timespec='seconds')
+
+
+def format_hosts_lines(pairs: List[Tuple[str, str]]) -> List[str]:
+    """格式化 hosts 行，左列为 IP 左对齐，右列为域名。"""
+    lines = []
+    for ip, domain in pairs:
+        lines.append(f"{ip:<28}{domain}")
+    return lines
+
+
+def write_hosts_files(all_pairs: List[Tuple[str, str]], per_platform: Dict[str, List[Tuple[str, str]]], update_time: str) -> None:
+    """生成根 hosts、scripts/hosts/hosts 以及平台专用 hosts 文件。"""
+    os.makedirs(SCRIPTS_HOSTS_DIR, exist_ok=True)
+
+    header = ["# GameLove Host Start"]
+    footer = [
+        f"# Update time: {update_time}",
+        "# Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts",
+        "# Star me: https://github.com/artemisia1107/GameLove",
+        "# GameLove Host End",
+    ]
+
+    def write_one(path: str, pairs: List[Tuple[str, str]]):
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(header + format_hosts_lines(pairs) + [''] + footer + ['']))
+
+    # 根 hosts
+    write_one(ROOT_HOSTS_PATH, all_pairs)
+    # scripts/hosts/hosts
+    write_one(SCRIPTS_HOSTS_PATH, all_pairs)
+
+    # 平台文件
+    for pk, pairs in per_platform.items():
+        # 将点替换为下划线或保留特殊文件名（如 battle.net 用 hosts_battle.net）
+        file_key = pk.replace('.', '_') if pk != 'battle.net' else 'battle.net'
+        path = os.path.join(SCRIPTS_HOSTS_DIR, f"hosts_{file_key}")
+        write_one(path, pairs)
+
+
+def build_hosts_json(
+    platforms: Dict[str, Dict[str, List[str]]],
+    results: Dict[str, List[str]],
+    chosen: Dict[str, Tuple[Optional[str], Optional[float], bool]],
+    update_time: str,
+    total_time: float,
+) -> Dict:
+    """构建 hosts.json 数据结构，尽量与现有结构对齐。"""
+    # 汇总
+    domains = [d for v in platforms.values() for d in v.get('domains', [])]
+    success_domains = [d for d in domains if results.get(d)]
+    failed_domains = [d for d in domains if not results.get(d)]
+
+    # all_hosts 映射（选择策略后的 IP 作为首选）
+    all_hosts = {d: (chosen[d][0] or results[d][0]) for d in success_domains}
+
+    # 统计
+    summary = {
+        "total_domains": len(domains),
+        "success_count": len(success_domains),
+        "failed_count": len(failed_domains),
+        "success_rate": f"{(len(success_domains)/len(domains)*100):.1f}%" if domains else "0.0%",
+        "update_time": update_time,
+    }
+
+    urls = {
+        "hosts_file": "https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts",
+        "json_api": "https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts.json",
+        "repository": "https://github.com/artemisia1107/GameLove",
+    }
+
+    # 方法及解析器配置（简化）
+    method_stats = {
+        "nslookup": {"success": 0, "failed": 0, "total": 0},
+        "doh": {"success": 0, "failed": 0, "total": 0},
+        "dns": {"success": len(success_domains), "failed": len(failed_domains), "total": len(domains)},
+        "ping": {"success": 0, "failed": 0, "total": 0},
+    }
+    resolver_config = {
+        "parallel_mode": True,
+        "max_workers": MAX_WORKERS,
+        "smart_resolver": True,
+    }
+
+    # 平台统计
+    platform_stats: Dict[str, Dict[str, str]] = {}
+    for pk, v in platforms.items():
+        ds = v.get('domains', [])
+        s = sum(1 for d in ds if results.get(d))
+        platform_stats[_display_name(pk)] = {
+            "static_domains": len(ds),
+            "success": s,
+            "success_rate": f"{(s/len(ds)*100):.1f}%" if ds else "0.0%",
+        }
+
+    # 域名指标（包含可达性与所选 IP）
+    domain_metrics: Dict[str, Dict[str, object]] = {}
+    latencies: List[float] = []
+    for d in domains:
+        ips = results.get(d, [])
+        chosen_ip, latency, reachable = chosen.get(d, (None, None, False))
+        if latency is not None:
+            latencies.append(latency)
+        domain_metrics[d] = {
+            "consensus": 1 if ips else 0,
+            "reachability_score": "1.000" if reachable else ("0.000" if ips else "0.000"),
+            "service_reachable": bool(reachable),
+            "chosen_ip": chosen_ip if chosen_ip else (ips[0] if ips else None),
+        }
+
+    # 性能统计
+    avg_resp = f"{(sum(latencies)/len(latencies)):.2f}s" if latencies else "-"
+    max_resp = f"{(max(latencies)):.2f}s" if latencies else "-"
+    perf = {
+        "total_time": f"{total_time:.2f}s",
+        "avg_response_time": avg_resp,
+        "max_response_time": max_resp,
+        "domains_per_second": f"{(len(domains)/total_time):.2f}" if total_time > 0 else "-",
+    }
+
+    data = {
+        "summary": summary,
+        "all_hosts": all_hosts,
+        "failed_domains": failed_domains,
+        "urls": urls,
+        "performance_stats": perf,
+        "method_stats": method_stats,
+        "resolver_config": resolver_config,
+        "platform_stats": platform_stats,
+        "domain_metrics": domain_metrics,
+        "platforms": platforms,
+    }
+    return data
+
+
+def _display_name(platform_key: str) -> str:
+    mapping = {
+        "steam": "Steam",
+        "epic": "Epic",
+        "origin": "Origin",
+        "uplay": "Uplay",
+        "battle.net": "Battle.net",
+        "gog": "GOG",
+        "rockstar": "Rockstar",
+    }
+    return mapping.get(platform_key, platform_key)
+
+
+# README 主机块自动更新
+README_BLOCK_DOMAINS_ORDER = [
+    # Steam
+    "steamcommunity.com",
+    "store.steampowered.com",
+    "api.steampowered.com",
+    "help.steampowered.com",
+    "steamcdn-a.akamaihd.net",
+    "steamuserimages-a.akamaihd.net",
+    "steamstore-a.akamaihd.net",
+
+    # Epic
+    "launcher-public-service-prod06.ol.epicgames.com",
+    "epicgames.com",
+    "unrealengine.com",
+    "fortnite.com",
+    "easyanticheat.net",
+
+    # Origin
+    "origin.com",
+    "ea.com",
+    "eaassets-a.akamaihd.net",
+    "ssl-lvlt.cdn.ea.com",
+
+    # Uplay
+    "ubisoft.com",
+    "ubi.com",
+    "uplay.com",
+    "static3.cdn.ubi.com",
+
+    # Battle.net
+    "battle.net",
+    "blizzard.com",
+    "battlenet.com.cn",
+    "blzstatic.cn",
+
+    # GOG
+    "gog.com",
+    "gog-statics.com",
+    "gogalaxy.com",
+
+    # Rockstar
+    "rockstargames.com",
+    "socialclub.rockstargames.com",
 ]
 
-# 常见公共 DNS（用于黑名单，避免误写入 hosts）
-COMMON_PUBLIC_DNS = {
-    "8.8.4.4",            # Google Public DNS secondary
-    "1.0.0.1",            # Cloudflare DNS secondary
-    "9.9.9.9",            # Quad9
-    "149.112.112.112",    # Quad9 secondary
-    "208.67.222.222",     # OpenDNS
-    "208.67.220.220",     # OpenDNS
-    "114.114.114.114",    # 114DNS（中国）
-    "114.114.115.115",    # 114DNS 备用
-    "223.5.5.5",          # AliDNS
-    "223.6.6.6",          # AliDNS 备用
-    "119.29.29.29",       # DNSPod（腾讯）
-    "180.76.76.76",       # BaiduDNS
-    "1.12.12.12",         # TencentDNS
-    "4.2.2.1",            # Level3/CenturyLink
-    "4.2.2.2",
-    "4.2.2.3",
-    "4.2.2.4",
-    "4.2.2.5",
-    "4.2.2.6",
-}
 
-DNS_SERVER_KNOWN = set(DNS_SERVER_LIST) | COMMON_PUBLIC_DNS | {"127.0.0.53", "127.0.0.1"}
+def update_readme_hosts_block(update_time: str, results: Dict[str, List[str]], chosen: Dict[str, Tuple[Optional[str], Optional[float], bool]], platforms: Dict[str, Dict[str, List[str]]] = None) -> None:
+    """更新 README 中 # GameLove Host Start/End 之间的主机块与时间戳。"""
+    try:
+        with open(README_PATH, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except Exception:
+        return
 
-# 模块化导入（解析器、平台配置、内容与文件管理）
-from modules.resolvers import (
-    DNSResolver as R_DNSResolver,
-    PingResolver as R_PingResolver,
-    NslookupResolver as R_NslookupResolver,
-    SmartResolver as R_SmartResolver,
-    CompositeResolver as R_CompositeResolver,
-    ParallelResolver as R_ParallelResolver,
-    ResolveResult as R_ResolveResult,
-    DoHResolver as R_DOHResolver,
-)
-from modules.platforms import GamePlatformConfig as P_GamePlatformConfig
-from modules.content import ContentGenerator as C_ContentGenerator, create_statistics_report_content
-from modules.files import FileManager as F_FileManager
-from modules.discovery import DomainDiscovery
-from modules.resolvers import ScoringConfig as R_ScoringConfig
-from modules.cache import StableCache as Cache_StableCache
+    start_marker = '# GameLove Host Start'
+    end_marker = '# GameLove Host End'
+    start_idx = content.find(start_marker)
+    end_idx = content.find(end_marker)
+    if start_idx == -1 or end_idx == -1 or end_idx <= start_idx:
+        return
 
-# 评分配置（用于智能解析器选择最优 IP）
-from modules.resolvers import ScoringConfig as R_ScoringConfig
+    # 以 platforms 中的域名为准；若缺失则使用内置顺序常量
+    domains_order: List[str] = []
+    if platforms and isinstance(platforms, dict):
+        for v in platforms.values():
+            domains_order.extend(v.get('domains', []))
+    if not domains_order:
+        domains_order = README_BLOCK_DOMAINS_ORDER
 
-# 可扩展的 DoH 提供商注册表（默认使用 JSON 接口）
-DOH_PROVIDERS = {
-    "cloudflare": {
-        "endpoint": "https://cloudflare-dns.com/dns-query",
-        "mode": "json",
-        "headers": {"Accept": "application/dns-json"},
-        "timeout": 4.0,
-        "max_retries": 3,
-        "backoff_factor": 0.4,
-    },
-    "google": {
-        "endpoint": "https://dns.google/resolve",
-        "mode": "json",
-        "headers": {"Accept": "application/dns-json"},
-        "timeout": 4.0,
-        "max_retries": 3,
-        "backoff_factor": 0.4,
-    },
-    "quad9": {
-        "endpoint": "https://dns.quad9.net/dns-query",
-        "mode": "json",
-        "headers": {"Accept": "application/dns-json"},
-        "timeout": 4.0,
-        "max_retries": 2,
-        "backoff_factor": 0.5,
-    },
-    "opendns": {
-        "endpoint": "https://doh.opendns.com/dns-query",
-        "mode": "json",
-        "headers": {"Accept": "application/dns-json"},
-        "timeout": 4.0,
-        "max_retries": 2,
-        "backoff_factor": 0.5,
-    },
-}
-
-class GameLoveHostsUpdater:
-    """GameLove Hosts更新器主控制类 - 重构版本"""
-    
-    def __init__(self, 
-                 delay_between_requests: float = 0.1,
-                 use_parallel: bool = True,
-                 max_workers: int = 10,
-                 use_smart_resolver: bool = True,
-                 prefer_fastest: bool = True,
-                 discovery_strategies: List[str] | None = None,
-                 rate_limit: float | None = None,
-                 discovery_timeout: float = 2.0):
-        """初始化更新器
-        
-        Args:
-            delay_between_requests: 请求间延迟时间（秒）
-            use_parallel: 是否使用并行解析
-            max_workers: 最大工作线程数
-            use_smart_resolver: 是否使用智能解析器
-        """
-        self.delay_between_requests = delay_between_requests
-        self.use_parallel = use_parallel
-        self.max_workers = max_workers
-        self.prefer_fastest = prefer_fastest
-        self.discovery_strategies = discovery_strategies or ["pattern"]
-        self.rate_limit = rate_limit
-        self.discovery_timeout = discovery_timeout
-
-        # 初始化其他组件（使用模块化实现）
-        self.content_generator = C_ContentGenerator()
-        self.file_manager = F_FileManager()
-        # 先初始化稳定缓存，供解析器使用
-        self.stable_cache = Cache_StableCache()
-
-        # 初始化解析器（依赖 stable_cache）
-        self._init_resolvers(use_smart_resolver)
-        self.discovery: DomainDiscovery | None = None
-        self.platform_discovered: Dict[str, List[str]] = {}
-        
-        # 统计信息
-        self.stats = {
-            'total_domains': 0,
-            'success_count': 0,
-            'failed_count': 0,
-            'start_time': None,
-            'end_time': None,
-            'total_time': 0
-        }
-    
-    def _init_resolvers(self, use_smart_resolver: bool) -> None:
-        """初始化解析器
-
-        Args:
-            use_smart_resolver: 是否使用智能解析器
-        """
-        # 创建基础解析器（Nslookup 使用指定 DNS 服务器列表）
-        base_resolvers = [
-            R_DNSResolver(timeout=10.0),
-            R_PingResolver(timeout=5, count=1),
-            R_NslookupResolver(timeout=10, nameservers=DNS_SERVER_LIST),
-        ]
-
-        # 加入多个 DoH 解析来源（Cloudflare/Google/Quad9/OpenDNS）
-        # 共享 Session 以复用连接与增大连接池，提高稳定性
-        shared_session = requests.Session()
-        adapter = HTTPAdapter(pool_connections=max(8, self.max_workers), pool_maxsize=max(16, self.max_workers * 2))
-        shared_session.mount('https://', adapter)
-        shared_session.headers.update({"Connection": "keep-alive"})
-        for _name, info in DOH_PROVIDERS.items():
-            base_resolvers.append(
-                R_DOHResolver(
-                    endpoint=info["endpoint"],
-                    timeout=info.get("timeout", 4.0),
-                    headers=info.get("headers"),
-                    max_retries=info.get("max_retries", 2),
-                    backoff_factor=info.get("backoff_factor", 0.4),
-                    session=shared_session,
-                )
-            )
-        
-        
-        # 评分配置（默认值，可后续读取外部配置覆盖）
-        scoring_cfg = R_ScoringConfig()
-
-        if use_smart_resolver:
-            # 使用智能解析器（可选最快 IP）
-            self.resolver = R_SmartResolver(
-                base_resolvers,
-                max_retries=2,
-                prefer_fastest=self.prefer_fastest,
-                scoring_config=scoring_cfg,
-                stable_cache=self.stable_cache,
-            )
+    lines = [start_marker]
+    for domain in domains_order:
+        ips = results.get(domain) or []
+        ip = (chosen.get(domain, (None, None, False))[0]) or (ips[0] if ips else '')
+        if ip:
+            lines.append(f"{ip:<27}{domain}")
         else:
-            # 使用组合解析器
-            self.resolver = R_CompositeResolver(base_resolvers)
-        
-        # 如果启用并行处理，包装为并行解析器
-        if self.use_parallel:
-            self.parallel_resolver = R_ParallelResolver(self.resolver, self.max_workers)
-        # 初始化发现器（在解析器就绪后）
-        self.discovery = DomainDiscovery(
-            self.resolver,
-            strategies=self.discovery_strategies,
-            rate_limit=self.rate_limit,
-            timeout=self.discovery_timeout,
-        )
-    
-    def resolve_all_domains(self) -> Tuple[Dict[str, str], List[str], Dict[str, R_ResolveResult]]:
-        """解析所有游戏平台域名
-        
-        Returns:
-            Tuple[Dict[str, str], List[str], Dict[str, R_ResolveResult]]: 
-            (成功解析的IP字典, 失败域名列表, 详细解析结果)
-        """
-        # 静态域名
-        all_domains = P_GamePlatformConfig.get_all_domains()
-        # 运行态发现新域名并合并
-        self.platform_discovered = self.discovery.discover_all_platforms() if self.discovery else {}
-        discovered_list: List[str] = [d for domains in self.platform_discovered.values() for d in domains]
-        augmented_domains = list(dict.fromkeys(all_domains + discovered_list))  # 去重保持顺序
-        self.stats['total_domains'] = len(all_domains)
-        self.stats['start_time'] = time.time()
-        
-        print(f"🔍 开始解析 {len(all_domains)} 个游戏平台域名...")
-        print(f"📊 解析模式: {'并行' if self.use_parallel else '串行'}")
-        print(f"🧠 解析器类型: {'智能解析器' if isinstance(self.resolver, R_SmartResolver) else '组合解析器'}")
-        print()
-        
-        if self.use_parallel:
-            # 并行解析
-            detailed_results = self.parallel_resolver.resolve_batch(augmented_domains)
-        else:
-            # 串行解析
-            detailed_results = {}
-            for domain in augmented_domains:
-                result = self.resolver.resolve(domain)
-                detailed_results[domain] = result
-                
-                # 显示进度
-                self._print_resolve_progress(domain, result)
-                
-                # 添加延迟避免请求过快
-                time.sleep(self.delay_between_requests)
-        
-        # 处理结果
-        ip_dict = {}
-        failed_domains = []
-        
-        for domain, result in detailed_results.items():
-            if result.success and result.ip and result.is_valid_ip:
-                # 过滤掉 DNS 服务器地址，避免写入 hosts
-                if self._is_dns_server_ip(result.ip):
-                    # 记录缓存：失败（不可写入）
-                    self.stable_cache.record(domain, result.ip, success=False, reachable=False)
-                    failed_domains.append(domain)
-                    self.stats['failed_count'] += 1
-                else:
-                    # 在写入前进行服务连通性校验（80/443 端口）
-                    reachable = self._is_service_reachable(result.ip)
-                    if reachable:
-                        ip_dict[domain] = result.ip
-                        # 记录缓存：成功且可达
-                        self.stable_cache.record(domain, result.ip, success=True, reachable=True)
-                        self.stats['success_count'] += 1
-                    else:
-                        # 记录缓存：失败（不可达）
-                        self.stable_cache.record(domain, result.ip, success=False, reachable=False)
-                        failed_domains.append(domain)
-                        self.stats['failed_count'] += 1
-            else:
-                # 记录缓存：失败
-                if result.ip:
-                    self.stable_cache.record(domain, result.ip, success=False, reachable=False)
-                failed_domains.append(domain)
-                self.stats['failed_count'] += 1
-            
-            # 如果是并行模式，在这里显示结果
-            if self.use_parallel:
-                self._print_resolve_progress(domain, result)
-        
-        self.stats['end_time'] = time.time()
-        self.stats['total_time'] = self.stats['end_time'] - self.stats['start_time']
-        
-        return ip_dict, failed_domains, detailed_results
-    
-    def _print_resolve_progress(self, domain: str, result: R_ResolveResult) -> None:
-        """打印解析进度
-        
-        Args:
-            domain: 域名
-            result: 解析结果
-        """
-        if result.success and result.ip and result.is_valid_ip:
-            method_str = f"({result.method.value})" if result.method else ""
-            time_str = f" [{result.response_time:.2f}s]" if result.response_time else ""
-            reachable = self._is_service_reachable(result.ip)
-            reach_str = "" if reachable else " [服务不可达]"
-            dns_str = " [DNS服务器IP]" if self._is_dns_server_ip(result.ip) else ""
-            print(f"✅ {domain:<40} -> {result.ip:<15} {method_str}{time_str}{reach_str}{dns_str}")
-        elif result.success and result.ip and not result.is_valid_ip:
-            method_str = f"({result.method.value})" if result.method else ""
-            time_str = f" [{result.response_time:.2f}s]" if result.response_time else ""
-            print(f"⚠️  {domain:<40} -> {result.ip:<15} {method_str}{time_str} [无效IP]")
-        else:
-            error_str = f" ({result.error[:50]}...)" if result.error and len(result.error) > 50 else f" ({result.error})" if result.error else ""
-            time_str = f" [{result.response_time:.2f}s]" if result.response_time else ""
-            print(f"❌ {domain:<40} -> 解析失败{error_str}{time_str}")
-    
-    def generate_and_save_files(self, 
-                               ip_dict: Dict[str, str], 
-                               failed_domains: List[str],
-                               detailed_results: Dict[str, R_ResolveResult]) -> None:
-        """生成并保存所有文件
-        
-        Args:
-            ip_dict: 成功解析的IP字典
-            failed_domains: 失败域名列表
-            detailed_results: 详细解析结果
-        """
-        if not ip_dict:
-            print("❌ 没有成功解析的域名，跳过文件生成")
-            return
-        
-        print(f"\n📝 开始生成文件...")
-        
-        # 生成完整hosts文件
-        hosts_content = self.content_generator.generate_hosts_content(ip_dict)
-        
-        # 保存主要文件到根目录
-        main_file = self.file_manager.save_hosts_file(hosts_content, 'hosts', is_root=True)
-        print(f"✅ 主文件已保存到: {main_file}")
-        
-        # 保存备份到hosts目录
-        backup_file = self.file_manager.save_hosts_file(hosts_content, 'hosts')
-        print(f"✅ 备份已保存到: {backup_file}")
-        
-        # 生成并保存JSON文件（包含详细统计信息）
-        json_data = self._generate_enhanced_json_data(ip_dict, failed_domains, detailed_results)
-        
-        json_file = self.file_manager.save_json_file(json_data, 'hosts.json', is_root=True)
-        print(f"✅ JSON文件已保存到: {json_file}")
-        
-        json_backup = self.file_manager.save_json_file(json_data, 'hosts.json')
-        print(f"✅ JSON备份已保存到: {json_backup}")
-        
-        # 生成分平台hosts文件
-        self._generate_platform_files(ip_dict)
-        
-        # 生成统计报告
-        self._generate_statistics_report(detailed_results)
-        
-        # 更新README.md
-        print(f"\n📝 更新README.md中的hosts内容...")
-        if self.file_manager.update_readme_hosts_content(hosts_content):
-            print("✅ README.md已成功更新")
-        else:
-            print("❌ README.md更新失败")
+            lines.append(f"{'0.0.0.0':<27}{domain}")
+    lines.append(f"# Update time: {update_time}")
+    lines.append("# Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts")
+    lines.append("# Star me: https://github.com/artemisia1107/GameLove")
+    lines.append(end_marker)
 
-        # 更新 README 平台域名数量（静态 + 发现）
-        platform_counts: Dict[str, int] = {}
-        for name, info in P_GamePlatformConfig.get_all_platforms().items():
-            discovered = self.platform_discovered.get(name, [])
-            platform_counts[name] = len(info.domains) + len(discovered)
-        print(f"\n📝 更新README.md中的平台域名数量...")
-        if self.file_manager.update_readme_platform_counts(platform_counts):
-            print("✅ README.md平台域名数量已更新")
-        else:
-            print("❌ README.md平台域名数量更新失败")
+    new_block = "\n" + "\n".join(lines) + "\n"
 
-        # 更新 README 质量指标汇总
-        quality_aggregates = json_data.get('quality_aggregates', {}) if isinstance(json_data, dict) else {}
-        print(f"\n📝 更新README.md中的质量指标汇总...")
-        if self.file_manager.update_readme_quality_summary(quality_aggregates):
-            print("✅ README.md质量指标汇总已更新")
-        else:
-            print("❌ README.md质量指标汇总更新失败")
-    
-    def _generate_enhanced_json_data(self, 
-                                   ip_dict: Dict[str, str], 
-                                   failed_domains: List[str],
-                                   detailed_results: Dict[str, R_ResolveResult]) -> Dict[str, Any]:
-        """生成增强的JSON数据，包含详细统计信息
-        
-        Args:
-            ip_dict: 成功解析的域名到IP映射
-            failed_domains: 解析失败的域名列表
-            detailed_results: 详细解析结果
-            
-        Returns:
-            Dict[str, Any]: 增强的JSON数据
-        """
-        # 统一由 content 模块生成增强 JSON
-        resolver_config = {
-            'parallel_mode': self.use_parallel,
-            'max_workers': self.max_workers if self.use_parallel else 1,
-            'smart_resolver': isinstance(self.resolver, R_SmartResolver)
-        }
-        return self.content_generator.generate_enhanced_json_data(
-            ip_dict,
-            failed_domains,
-            detailed_results,
-            self.stats,
-            resolver_config,
-            self.platform_discovered,
-        )
-    
-    def _generate_platform_files(self, ip_dict: Dict[str, str]) -> None:
-        """生成分平台hosts文件
-        
-        Args:
-            ip_dict: 成功解析的IP字典
-        """
-        print(f"\n📁 生成分平台hosts文件...")
-        
-        for platform_name, platform_info in P_GamePlatformConfig.get_all_platforms().items():
-            platform_ips = {
-                domain: ip_dict[domain] 
-                for domain in platform_info.domains 
-                if domain in ip_dict
-            }
-            
-            if platform_ips:
-                platform_content = self.content_generator.generate_hosts_content(platform_ips)
-                platform_file = self.file_manager.save_hosts_file(
-                    platform_content, 
-                    f'hosts_{platform_name.lower()}'
-                )
-                success_rate = len(platform_ips) / len(platform_info.domains) * 100
-                print(f"✅ {platform_name:<12} -> {platform_file:<30} ({len(platform_ips)}/{len(platform_info.domains)}, {success_rate:.1f}%)")
-            else:
-                print(f"❌ {platform_name:<12} -> 无可用域名")
-    
-    def _generate_statistics_report(self, detailed_results: Dict[str, R_ResolveResult]) -> None:
-        """生成统计报告文件
-        
-        Args:
-            detailed_results: 详细解析结果
-        """
-        report_content = create_statistics_report_content(detailed_results, self.stats)
-        
-        report_file = self.file_manager.save_hosts_file(
-            report_content, 
-            'statistics_report.txt'
-        )
-        print(f"📊 统计报告已保存到: {report_file}")
-    
-    def print_summary(self) -> None:
-        """打印执行摘要"""
-        print(f"\n{'='*60}")
-        print(f"🎉 GameLove Hosts 更新完成！")
-        print(f"{'='*60}")
-        print(f"📊 解析统计:")
-        print(f"   总域名数: {self.stats['total_domains']}")
-        print(f"   成功解析: {self.stats['success_count']} ({self.stats['success_count']/self.stats['total_domains']*100:.1f}%)")
-        print(f"   解析失败: {self.stats['failed_count']} ({self.stats['failed_count']/self.stats['total_domains']*100:.1f}%)")
-        print(f"   总耗时: {self.stats['total_time']:.2f}秒")
-        print(f"   平均速度: {self.stats['total_domains']/self.stats['total_time']:.2f} 域名/秒")
-        print(f"\n📁 文件位置:")
-        print(f"   主文件: 根目录 (hosts, hosts.json)")
-        print(f"   备份: {self.file_manager.hosts_dir}/ 目录")
-        print(f"   统计报告: {self.file_manager.hosts_dir}/statistics_report.txt")
-        print(f"\n📖 使用说明请查看 README.md")
-        print(f"⭐ 如果觉得有用，请给项目点个星: https://github.com/artemisia1107/GameLove")
-    
-    def run(self) -> None:
-        """运行主程序"""
-        print("🎮 GameLove - 游戏平台网络优化工具 (重构版 v2.0)")
-        print("参考 GitHub520 设计，让你\"爱\"上游戏！")
-        print("=" * 60)
-        
-        try:
-            # 解析所有域名
-            ip_dict, failed_domains, detailed_results = self.resolve_all_domains()
-            
-            # 生成并保存文件
-            self.generate_and_save_files(ip_dict, failed_domains, detailed_results)
-            
-            # 打印摘要
-            self.print_summary()
-            
-        except KeyboardInterrupt:
-            print(f"\n⚠️ 用户中断操作")
-        except Exception as e:
-            print(f"\n❌ 程序执行出错: {e}")
-            import traceback
-            traceback.print_exc()
+    pre = content[:start_idx]
+    post = content[end_idx + len(end_marker):]
+    updated = pre + new_block + post
 
-    def _is_dns_server_ip(self, ip: str) -> bool:
-        """判断是否为 DNS 服务器地址（避免写入 hosts）
-        
-        规则：
-        - 属于配置的上游 DNS 列表或常见公共 DNS
-        - 常见本机 stub/loopback DNS：127.0.0.53, 127.0.0.1
-        
-        Args:
-            ip: 待检测的 IP
-        Returns:
-            bool: 是 DNS 服务器地址返回 True
-        """
-        try:
-            if ip in DNS_SERVER_KNOWN:
-                return True
-        except Exception:
-            pass
-        return False
+    import re
+    # 同步下方中文提示时间戳（更宽松的匹配，确保替换成功）
+    # 精确替换中文提示行
+    ts_line_pattern = r"^该内容会自动定时更新，数据更新时间：.*$"
+    new_ts_line = f"该内容会自动定时更新，数据更新时间：{update_time}"
+    if re.search(ts_line_pattern, updated, flags=re.MULTILINE):
+        updated = re.sub(ts_line_pattern, new_ts_line, updated, flags=re.MULTILINE)
 
-    def _is_service_reachable(self, ip: str, ports: List[int] = [443, 80], timeout: float = 0.8) -> bool:
-        """检查目标 IP 的常用服务端口是否可达
-        
-        Args:
-            ip: 目标 IP 地址
-            ports: 检查的端口列表（默认 443/80）
-            timeout: 单次连接超时秒数
-        Returns:
-            bool: 任意端口可达则为 True
-        """
-        try:
-            for port in ports:
-                try:
-                    with socket.create_connection((ip, port), timeout=timeout):
-                        return True
-                except Exception:
-                    continue
-        except Exception:
-            pass
-        return False
+    try:
+        with open(README_PATH, 'w', encoding='utf-8') as f:
+            f.write(updated)
+    except Exception:
+        pass
 
 
-def main():
-    """主函数入口"""
-    parser = argparse.ArgumentParser(description="GameLove Hosts 更新工具")
-    parser.add_argument("--delay", type=float, default=0.1, help="串行模式下的请求间延迟（秒）")
-    parser.add_argument("--workers", type=int, default=10, help="并行模式下的最大工作线程数")
-    parser.add_argument("--discovery-strategies", type=str, default="pattern", help="域名发现策略，逗号分隔：pattern,dns,robots")
-    parser.add_argument("--rate-limit", type=float, default=5.0, help="发现阶段请求速率限制（每秒）")
-    parser.add_argument("--discovery-timeout", type=float, default=2.0, help="发现阶段网络请求超时（秒）")
+def main() -> None:
+    platforms = load_platform_domains()
+    update_time = now_iso_cn()
 
-    group_parallel = parser.add_mutually_exclusive_group()
-    group_parallel.add_argument("--parallel", dest="parallel", action="store_true", help="启用并行解析")
-    group_parallel.add_argument("--no-parallel", dest="parallel", action="store_false", help="禁用并行解析")
-    parser.set_defaults(parallel=True)
+    domains = [d for v in platforms.values() for d in v.get('domains', [])]
+    start_all = time.perf_counter()
 
-    group_smart = parser.add_mutually_exclusive_group()
-    group_smart.add_argument("--smart", dest="smart", action="store_true", help="使用智能解析器")
-    group_smart.add_argument("--no-smart", dest="smart", action="store_false", help="使用组合解析器")
-    parser.set_defaults(smart=True)
+    # 并发解析并选择优质 IP
+    results: Dict[str, List[str]] = {}
+    chosen: Dict[str, Tuple[Optional[str], Optional[float], bool]] = {}
 
-    group_fastest = parser.add_mutually_exclusive_group()
-    group_fastest.add_argument("--fastest", dest="fastest", action="store_true", help="在多个候选时优选延迟最低的 IP")
-    group_fastest.add_argument("--no-fastest", dest="fastest", action="store_false", help="不进行延迟优选，使用首个成功候选")
-    parser.set_defaults(fastest=True)
+    def worker(domain: str):
+        ips = resolve_domain(domain, DNS_SERVER_LIST, timeout=2.0)
+        best_ip, latency, reachable = choose_best_ip(ips) if ips else (None, None, False)
+        return domain, ips, best_ip, latency, reachable
 
-    args = parser.parse_args([]) if os.environ.get("GAMELOVE_ARGS_INLINE") else parser.parse_args()
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        future_map = {executor.submit(worker, d): d for d in domains}
+        for fut in as_completed(future_map):
+            domain, ips, best_ip, latency, reachable = fut.result()
+            results[domain] = ips
+            chosen[domain] = (best_ip, latency, reachable)
 
-    strategies = [s.strip() for s in (args.discovery_strategies or "").split(',') if s.strip()]
-    updater = GameLoveHostsUpdater(
-        delay_between_requests=args.delay,
-        use_parallel=args.parallel,
-        max_workers=args.workers,
-        use_smart_resolver=args.smart,
-        prefer_fastest=args.fastest,
-        discovery_strategies=strategies or ["pattern"],
-        rate_limit=args.rate_limit,
-        discovery_timeout=args.discovery_timeout,
-    )
-    updater.run()
+    total_time = time.perf_counter() - start_all
+
+    # 汇总全部与分平台的 IP->域名对（使用选择策略后的 IP）
+    all_pairs: List[Tuple[str, str]] = []
+    per_platform: Dict[str, List[Tuple[str, str]]] = {pk: [] for pk in platforms.keys()}
+    for pk, v in platforms.items():
+        for domain in v.get('domains', []):
+            ips = results.get(domain) or []
+            if ips:
+                ip = chosen.get(domain, (None, None, False))[0] or ips[0]
+                all_pairs.append((ip, domain))
+                per_platform[pk].append((ip, domain))
+
+    # 写入 hosts 文件们
+    write_hosts_files(all_pairs, per_platform, update_time)
+
+    # 写入 JSON 文件（根与 scripts/hosts）
+    data = build_hosts_json(platforms, results, chosen, update_time, total_time)
+    for path in (ROOT_JSON_PATH, SCRIPTS_JSON_PATH):
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+    # 自动更新 README 主机块
+    update_readme_hosts_block(update_time, results, chosen, platforms)
+
+    print(f"Updated hosts and hosts.json at {update_time} (workers={MAX_WORKERS}, elapsed={total_time:.2f}s)")
 
 
 if __name__ == "__main__":

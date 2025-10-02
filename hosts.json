@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "summary": {
     "total_domains": 29,
@@ -349,4 +350,357 @@
       ]
     }
   }
+=======
+{
+  "summary": {
+    "total_domains": 29,
+    "success_count": 26,
+    "failed_count": 3,
+    "success_rate": "89.7%",
+    "update_time": "2025-10-02T20:40:15+08:00"
+  },
+  "all_hosts": {
+    "steamcommunity.com": "69.171.247.71",
+    "store.steampowered.com": "72.246.28.155",
+    "api.steampowered.com": "104.73.234.102",
+    "help.steampowered.com": "104.73.234.102",
+    "steamcdn-a.akamaihd.net": "23.46.155.174",
+    "steamuserimages-a.akamaihd.net": "92.122.244.19",
+    "steamstore-a.akamaihd.net": "92.122.244.40",
+    "launcher-public-service-prod06.ol.epicgames.com": "43.159.5.170",
+    "epicgames.com": "3.210.250.97",
+    "unrealengine.com": "18.210.9.75",
+    "fortnite.com": "54.173.96.7",
+    "easyanticheat.net": "104.18.3.180",
+    "origin.com": "104.122.33.161",
+    "ea.com": "23.55.98.144",
+    "eaassets-a.akamaihd.net": "2.17.107.49",
+    "ubisoft.com": "65.9.112.47",
+    "ubi.com": "3.95.49.241",
+    "uplay.com": "52.31.3.176",
+    "static3.cdn.ubi.com": "72.246.28.48",
+    "battle.net": "166.117.48.155",
+    "blizzard.com": "166.117.198.189",
+    "battlenet.com.cn": "118.31.67.128",
+    "gog.com": "151.101.193.55",
+    "gogalaxy.com": "77.79.249.114",
+    "rockstargames.com": "104.111.201.109",
+    "socialclub.rockstargames.com": "104.255.105.71"
+  },
+  "failed_domains": [
+    "ssl-lvlt.cdn.ea.com",
+    "blzstatic.cn",
+    "gog-statics.com"
+  ],
+  "urls": {
+    "hosts_file": "https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts",
+    "json_api": "https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts.json",
+    "repository": "https://github.com/artemisia1107/GameLove"
+  },
+  "performance_stats": {
+    "total_time": "13.97s",
+    "avg_response_time": "0.18s",
+    "max_response_time": "0.29s",
+    "domains_per_second": "2.08"
+  },
+  "method_stats": {
+    "nslookup": {
+      "success": 0,
+      "failed": 0,
+      "total": 0
+    },
+    "doh": {
+      "success": 0,
+      "failed": 0,
+      "total": 0
+    },
+    "dns": {
+      "success": 26,
+      "failed": 3,
+      "total": 29
+    },
+    "ping": {
+      "success": 0,
+      "failed": 0,
+      "total": 0
+    }
+  },
+  "resolver_config": {
+    "parallel_mode": true,
+    "max_workers": 10,
+    "smart_resolver": true
+  },
+  "platform_stats": {
+    "Steam": {
+      "static_domains": 7,
+      "success": 7,
+      "success_rate": "100.0%"
+    },
+    "Epic": {
+      "static_domains": 5,
+      "success": 5,
+      "success_rate": "100.0%"
+    },
+    "Origin": {
+      "static_domains": 4,
+      "success": 3,
+      "success_rate": "75.0%"
+    },
+    "Uplay": {
+      "static_domains": 4,
+      "success": 4,
+      "success_rate": "100.0%"
+    },
+    "Battle.net": {
+      "static_domains": 4,
+      "success": 3,
+      "success_rate": "75.0%"
+    },
+    "GOG": {
+      "static_domains": 3,
+      "success": 2,
+      "success_rate": "66.7%"
+    },
+    "Rockstar": {
+      "static_domains": 2,
+      "success": 2,
+      "success_rate": "100.0%"
+    }
+  },
+  "domain_metrics": {
+    "steamcommunity.com": {
+      "consensus": 1,
+      "reachability_score": "0.000",
+      "service_reachable": false,
+      "chosen_ip": "69.171.247.71"
+    },
+    "store.steampowered.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "72.246.28.155"
+    },
+    "api.steampowered.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "104.73.234.102"
+    },
+    "help.steampowered.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "104.73.234.102"
+    },
+    "steamcdn-a.akamaihd.net": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "23.46.155.174"
+    },
+    "steamuserimages-a.akamaihd.net": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "92.122.244.19"
+    },
+    "steamstore-a.akamaihd.net": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "92.122.244.40"
+    },
+    "launcher-public-service-prod06.ol.epicgames.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "43.159.5.170"
+    },
+    "epicgames.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "3.210.250.97"
+    },
+    "unrealengine.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "18.210.9.75"
+    },
+    "fortnite.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "54.173.96.7"
+    },
+    "easyanticheat.net": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "104.18.3.180"
+    },
+    "origin.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "104.122.33.161"
+    },
+    "ea.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "23.55.98.144"
+    },
+    "eaassets-a.akamaihd.net": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "2.17.107.49"
+    },
+    "ssl-lvlt.cdn.ea.com": {
+      "consensus": 0,
+      "reachability_score": "0.000",
+      "service_reachable": false,
+      "chosen_ip": null
+    },
+    "ubisoft.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "65.9.112.47"
+    },
+    "ubi.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "3.95.49.241"
+    },
+    "uplay.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "52.31.3.176"
+    },
+    "static3.cdn.ubi.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "72.246.28.48"
+    },
+    "battle.net": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "166.117.48.155"
+    },
+    "blizzard.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "166.117.198.189"
+    },
+    "battlenet.com.cn": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "118.31.67.128"
+    },
+    "blzstatic.cn": {
+      "consensus": 0,
+      "reachability_score": "0.000",
+      "service_reachable": false,
+      "chosen_ip": null
+    },
+    "gog.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "151.101.193.55"
+    },
+    "gog-statics.com": {
+      "consensus": 0,
+      "reachability_score": "0.000",
+      "service_reachable": false,
+      "chosen_ip": null
+    },
+    "gogalaxy.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "77.79.249.114"
+    },
+    "rockstargames.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "104.111.201.109"
+    },
+    "socialclub.rockstargames.com": {
+      "consensus": 1,
+      "reachability_score": "1.000",
+      "service_reachable": true,
+      "chosen_ip": "104.255.105.71"
+    }
+  },
+  "platforms": {
+    "steam": {
+      "domains": [
+        "steamcommunity.com",
+        "store.steampowered.com",
+        "api.steampowered.com",
+        "help.steampowered.com",
+        "steamcdn-a.akamaihd.net",
+        "steamuserimages-a.akamaihd.net",
+        "steamstore-a.akamaihd.net"
+      ]
+    },
+    "epic": {
+      "domains": [
+        "launcher-public-service-prod06.ol.epicgames.com",
+        "epicgames.com",
+        "unrealengine.com",
+        "fortnite.com",
+        "easyanticheat.net"
+      ]
+    },
+    "origin": {
+      "domains": [
+        "origin.com",
+        "ea.com",
+        "eaassets-a.akamaihd.net",
+        "ssl-lvlt.cdn.ea.com"
+      ]
+    },
+    "uplay": {
+      "domains": [
+        "ubisoft.com",
+        "ubi.com",
+        "uplay.com",
+        "static3.cdn.ubi.com"
+      ]
+    },
+    "battle.net": {
+      "domains": [
+        "battle.net",
+        "blizzard.com",
+        "battlenet.com.cn",
+        "blzstatic.cn"
+      ]
+    },
+    "gog": {
+      "domains": [
+        "gog.com",
+        "gog-statics.com",
+        "gogalaxy.com"
+      ]
+    },
+    "rockstar": {
+      "domains": [
+        "rockstargames.com",
+        "socialclub.rockstargames.com"
+      ]
+    }
+  }
+>>>>>>> 76a3ce9 (feat(update_hosts): 并发解析与智能选 IP；自动同步 README 主机块与时间；修复 README 时间戳格式；扩充域名列表覆盖所有平台)
 }

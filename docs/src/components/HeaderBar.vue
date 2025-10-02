@@ -12,5 +12,4 @@
 // 纯展示组件
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

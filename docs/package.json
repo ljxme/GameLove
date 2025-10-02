@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build --mode production",
     "preview": "vite preview",
-    "build-css": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
+    "build-css": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch",
+    "lint": "eslint --ext .ts,.vue src",
+    "format": "prettier --write \"src/**/*.{ts,vue,css,postcss}\""
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -16,7 +18,13 @@
     "tailwindcss": "^3.3.5",
     "typescript": "^5.2.2",
     "vite": "^4.5.0",
-    "@vitejs/plugin-vue": "^4.5.2"
+    "@vitejs/plugin-vue": "^4.5.2",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-vue": "^9.18.1",
+    "prettier": "^3.2.5"
   },
   "dependencies": {
     "vue": "^3.4.0"

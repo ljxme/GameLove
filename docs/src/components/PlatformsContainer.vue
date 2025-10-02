@@ -8,5 +8,4 @@
 // 保持占位容器与 ID，兼容当前 DOM 渲染逻辑
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>
