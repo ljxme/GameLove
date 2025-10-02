@@ -191,13 +191,13 @@ class HostsConnectivityChecker {
      */
     private async loadHostsData(): Promise<void> {
         try {
-            // 尝试从远程API加载数据
-            const response = await fetch('https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts.json');
+            // 尝试从远程API加载数据（修正为正确的 RAW 路径）
+            const response = await fetch('https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts.json', { cache: 'no-store' });
             if (response.ok) {
                 const hostsData = await response.json();
                 this.parseHostsData(hostsData);
             } else {
-                throw new Error('Failed to load remote data');
+                throw new Error(`Failed to load remote data: ${response.status} ${response.statusText}`);
             }
         } catch (error) {
             console.warn('Failed to load remote hosts data, using local test data:', error);
@@ -215,47 +215,62 @@ class HostsConnectivityChecker {
      * 获取本地测试数据
      */
     private getLocalTestData(): any {
+        // 本地数据结构与真实 hosts.json 对齐，避免解析失败
         return {
             "urls": {
-                "hosts_file": "https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts",
-                "json_api": "https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts.json"
+                "hosts_file": "https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts",
+                "json_api": "https://raw.githubusercontent.com/artemisia1107/GameLove/main/hosts.json"
             },
             "platforms": {
-                "Steam": [
-                    "steamcommunity.com",
-                    "store.steampowered.com",
-                    "steamcdn-a.akamaihd.net"
-                ],
-                "Epic Games": [
-                    "launcher-public-service-prod06.ol.epicgames.com",
-                    "epicgames.com",
-                    "unrealengine.com"
-                ],
-                "Origin": [
-                    "origin.com",
-                    "ea.com",
-                    "eaplay.com"
-                ],
-                "Uplay": [
-                    "ubisoft.com",
-                    "ubi.com",
-                    "uplay.com"
-                ],
-                "Battle.net": [
-                    "battle.net",
-                    "blizzard.com",
-                    "battlenet.com.cn"
-                ],
-                "GOG": [
-                    "gog.com",
-                    "gogalaxy.com",
-                    "cdprojekt.com"
-                ],
-                "Rockstar": [
-                    "rockstargames.com",
-                    "socialclub.rockstargames.com",
-                    "rsg.sc"
-                ]
+                "steam": {
+                    "domains": [
+                        { "domain": "steamcommunity.com" },
+                        { "domain": "store.steampowered.com" },
+                        { "domain": "steamcdn-a.akamaihd.net" }
+                    ]
+                },
+                "epic": {
+                    "domains": [
+                        { "domain": "launcher-public-service-prod06.ol.epicgames.com" },
+                        { "domain": "epicgames.com" },
+                        { "domain": "unrealengine.com" }
+                    ]
+                },
+                "origin": {
+                    "domains": [
+                        { "domain": "origin.com" },
+                        { "domain": "ea.com" },
+                        { "domain": "eaplay.com" }
+                    ]
+                },
+                "uplay": {
+                    "domains": [
+                        { "domain": "ubisoft.com" },
+                        { "domain": "ubi.com" },
+                        { "domain": "uplay.com" }
+                    ]
+                },
+                "battle.net": {
+                    "domains": [
+                        { "domain": "battle.net" },
+                        { "domain": "blizzard.com" },
+                        { "domain": "battlenet.com.cn" }
+                    ]
+                },
+                "gog": {
+                    "domains": [
+                        { "domain": "gog.com" },
+                        { "domain": "gogalaxy.com" },
+                        { "domain": "cdprojekt.com" }
+                    ]
+                },
+                "rockstar": {
+                    "domains": [
+                        { "domain": "rockstargames.com" },
+                        { "domain": "socialclub.rockstargames.com" },
+                        { "domain": "rsg.sc" }
+                    ]
+                }
             }
         };
     }
@@ -281,12 +296,18 @@ class HostsConnectivityChecker {
                 const platformName = platformNameMap[platformKey] || platformKey;
                 const platform = this.platforms.get(platformName);
                 
-                if (platform && platformData && platformData.domains && Array.isArray(platformData.domains)) {
-                    platform.domains = platformData.domains.map((domainInfo: any) => ({
-                        domain: domainInfo.domain,
+                if (!platform) {
+                    return;
+                }
+
+                // 兼容两种域名数组格式：字符串数组或对象数组
+                const domainsArray = platformData?.domains;
+                if (Array.isArray(domainsArray)) {
+                    platform.domains = domainsArray.map((item: any) => ({
+                        domain: typeof item === 'string' ? item : item?.domain,
                         status: ConnectivityStatus.PENDING,
                         retryCount: 0
-                    }));
+                    })).filter(d => !!d.domain);
                 }
             });
         }
