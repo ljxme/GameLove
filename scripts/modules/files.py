@@ -191,3 +191,71 @@ class FileManager:
         except Exception as e:
             print(f'更新 README 平台域名数量失败：{e}')
             return False
+
+    def update_readme_quality_summary(self, quality_aggregates: Dict[str, Any]) -> bool:
+        """更新 README.md 中的质量指标汇总（位于“自动更新”段落内）
+
+        在“## 五、自动更新”段落中维护一个子块“### 质量指标汇总”，
+        动态写入平均可达性评分与平均共识值。
+
+        Args:
+            quality_aggregates: 包含 reachability_avg 与 consensus_avg 的字典
+
+        Returns:
+            bool: 是否更新成功
+        """
+        readme_path = os.path.join(self.base_dir, 'README.md')
+        try:
+            with open(readme_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        except FileNotFoundError:
+            print('README.md文件未找到')
+            return False
+
+        import re
+        # 锁定“自动更新”段落范围
+        sec_start = re.search(r"^##\s*五、自动更新\s*$", content, flags=re.MULTILINE)
+        if not sec_start:
+            print('未找到“自动更新”段落标题')
+            return False
+
+        # 找到下一个同级标题作为段落结束
+        sec_end_rel = re.search(r"^##\s+", content[sec_start.end():], flags=re.MULTILINE)
+        start_idx = sec_start.start()
+        end_idx = sec_start.end() + (sec_end_rel.start() if sec_end_rel else len(content[sec_start.end():]))
+
+        prefix = content[:start_idx]
+        section = content[start_idx:end_idx]
+        suffix = content[end_idx:]
+
+        # 准备新块内容
+        reach_avg = quality_aggregates.get('reachability_avg')
+        cons_avg = quality_aggregates.get('consensus_avg')
+        now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S+08:00')
+        reach_str = str(reach_avg) if reach_avg is not None else 'N/A'
+        cons_str = str(cons_avg) if cons_avg is not None else 'N/A'
+        new_block = (
+            "### 质量指标汇总\n"
+            f"- 平均可达性评分：{reach_str}\n"
+            f"- 平均共识值：{cons_str}\n"
+            f"- 数据更新时间：{now}\n"
+        )
+
+        # 在段落内查找现有的“质量指标汇总”子块
+        block_pattern = r"###\s*质量指标汇总\s*\n(?:.*?\n)*?(?=^###\s|\Z)"
+        existing = re.search(block_pattern, section, flags=re.MULTILINE)
+
+        if existing:
+            updated_section = section[:existing.start()] + new_block + section[existing.end():]
+        else:
+            # 若不存在，则在段落末尾追加一个空行后插入
+            updated_section = section.rstrip() + "\n\n" + new_block + "\n"
+
+        try:
+            with open(readme_path, 'w', encoding='utf-8') as f:
+                f.write(prefix + updated_section + suffix)
+            print('README 质量指标汇总已更新')
+            return True
+        except Exception as e:
+            print(f'更新 README 质量指标汇总失败：{e}')
+            return False

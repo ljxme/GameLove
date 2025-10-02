@@ -13,6 +13,8 @@ import time
 import os
 import socket
 from typing import Dict, List, Tuple, Any
+import requests
+from requests.adapters import HTTPAdapter
 
 # 指定 DNS 解析服务器列表（按优先级）
 DNS_SERVER_LIST = [
@@ -20,6 +22,12 @@ DNS_SERVER_LIST = [
     "8.8.8.8",            # Google Public DNS
     "101.101.101.101",    # Quad101 DNS (台湾)
     "101.102.103.104",    # Quad101 DNS (台湾备用)
+]
+
+# 公共 DoH 接口（用于多来源解析对比）
+DOH_ENDPOINTS = [
+    "https://cloudflare-dns.com/dns-query",  # Cloudflare DoH JSON
+    "https://dns.google/resolve",            # Google DoH JSON
 ]
 
 # 常见公共 DNS（用于黑名单，避免误写入 hosts）
@@ -56,11 +64,53 @@ from modules.resolvers import (
     CompositeResolver as R_CompositeResolver,
     ParallelResolver as R_ParallelResolver,
     ResolveResult as R_ResolveResult,
+    DoHResolver as R_DOHResolver,
 )
 from modules.platforms import GamePlatformConfig as P_GamePlatformConfig
 from modules.content import ContentGenerator as C_ContentGenerator, create_statistics_report_content
 from modules.files import FileManager as F_FileManager
 from modules.discovery import DomainDiscovery
+from modules.resolvers import ScoringConfig as R_ScoringConfig
+from modules.cache import StableCache as Cache_StableCache
+
+# 评分配置（用于智能解析器选择最优 IP）
+from modules.resolvers import ScoringConfig as R_ScoringConfig
+
+# 可扩展的 DoH 提供商注册表（默认使用 JSON 接口）
+DOH_PROVIDERS = {
+    "cloudflare": {
+        "endpoint": "https://cloudflare-dns.com/dns-query",
+        "mode": "json",
+        "headers": {"Accept": "application/dns-json"},
+        "timeout": 4.0,
+        "max_retries": 3,
+        "backoff_factor": 0.4,
+    },
+    "google": {
+        "endpoint": "https://dns.google/resolve",
+        "mode": "json",
+        "headers": {"Accept": "application/dns-json"},
+        "timeout": 4.0,
+        "max_retries": 3,
+        "backoff_factor": 0.4,
+    },
+    "quad9": {
+        "endpoint": "https://dns.quad9.net/dns-query",
+        "mode": "json",
+        "headers": {"Accept": "application/dns-json"},
+        "timeout": 4.0,
+        "max_retries": 2,
+        "backoff_factor": 0.5,
+    },
+    "opendns": {
+        "endpoint": "https://doh.opendns.com/dns-query",
+        "mode": "json",
+        "headers": {"Accept": "application/dns-json"},
+        "timeout": 4.0,
+        "max_retries": 2,
+        "backoff_factor": 0.5,
+    },
+}
 
 class GameLoveHostsUpdater:
     """GameLove Hosts更新器主控制类 - 重构版本"""
@@ -96,6 +146,7 @@ class GameLoveHostsUpdater:
         # 初始化其他组件（使用模块化实现）
         self.content_generator = C_ContentGenerator()
         self.file_manager = F_FileManager()
+        self.stable_cache = Cache_StableCache()
         self.discovery: DomainDiscovery | None = None
         self.platform_discovered: Dict[str, List[str]] = {}
         
@@ -111,7 +162,7 @@ class GameLoveHostsUpdater:
     
     def _init_resolvers(self, use_smart_resolver: bool) -> None:
         """初始化解析器
-        
+
         Args:
             use_smart_resolver: 是否使用智能解析器
         """
@@ -119,12 +170,40 @@ class GameLoveHostsUpdater:
         base_resolvers = [
             R_DNSResolver(timeout=10.0),
             R_PingResolver(timeout=5, count=1),
-            R_NslookupResolver(timeout=10, nameservers=DNS_SERVER_LIST)
+            R_NslookupResolver(timeout=10, nameservers=DNS_SERVER_LIST),
         ]
+
+        # 加入多个 DoH 解析来源（Cloudflare/Google/Quad9/OpenDNS）
+        # 共享 Session 以复用连接与增大连接池，提高稳定性
+        shared_session = requests.Session()
+        adapter = HTTPAdapter(pool_connections=max(8, self.max_workers), pool_maxsize=max(16, self.max_workers * 2))
+        shared_session.mount('https://', adapter)
+        shared_session.headers.update({"Connection": "keep-alive"})
+        for _name, info in DOH_PROVIDERS.items():
+            base_resolvers.append(
+                R_DOHResolver(
+                    endpoint=info["endpoint"],
+                    timeout=info.get("timeout", 4.0),
+                    headers=info.get("headers"),
+                    max_retries=info.get("max_retries", 2),
+                    backoff_factor=info.get("backoff_factor", 0.4),
+                    session=shared_session,
+                )
+            )
         
+        
+        # 评分配置（默认值，可后续读取外部配置覆盖）
+        scoring_cfg = R_ScoringConfig()
+
         if use_smart_resolver:
             # 使用智能解析器（可选最快 IP）
-            self.resolver = R_SmartResolver(base_resolvers, max_retries=2, prefer_fastest=self.prefer_fastest)
+            self.resolver = R_SmartResolver(
+                base_resolvers,
+                max_retries=2,
+                prefer_fastest=self.prefer_fastest,
+                scoring_config=scoring_cfg,
+                stable_cache=self.stable_cache,
+            )
         else:
             # 使用组合解析器
             self.resolver = R_CompositeResolver(base_resolvers)
@@ -185,17 +264,27 @@ class GameLoveHostsUpdater:
             if result.success and result.ip and result.is_valid_ip:
                 # 过滤掉 DNS 服务器地址，避免写入 hosts
                 if self._is_dns_server_ip(result.ip):
+                    # 记录缓存：失败（不可写入）
+                    self.stable_cache.record(domain, result.ip, success=False, reachable=False)
                     failed_domains.append(domain)
                     self.stats['failed_count'] += 1
                 else:
                     # 在写入前进行服务连通性校验（80/443 端口）
-                    if self._is_service_reachable(result.ip):
+                    reachable = self._is_service_reachable(result.ip)
+                    if reachable:
                         ip_dict[domain] = result.ip
+                        # 记录缓存：成功且可达
+                        self.stable_cache.record(domain, result.ip, success=True, reachable=True)
                         self.stats['success_count'] += 1
                     else:
+                        # 记录缓存：失败（不可达）
+                        self.stable_cache.record(domain, result.ip, success=False, reachable=False)
                         failed_domains.append(domain)
                         self.stats['failed_count'] += 1
             else:
+                # 记录缓存：失败
+                if result.ip:
+                    self.stable_cache.record(domain, result.ip, success=False, reachable=False)
                 failed_domains.append(domain)
                 self.stats['failed_count'] += 1
             
@@ -291,6 +380,14 @@ class GameLoveHostsUpdater:
             print("✅ README.md平台域名数量已更新")
         else:
             print("❌ README.md平台域名数量更新失败")
+
+        # 更新 README 质量指标汇总
+        quality_aggregates = json_data.get('quality_aggregates', {}) if isinstance(json_data, dict) else {}
+        print(f"\n📝 更新README.md中的质量指标汇总...")
+        if self.file_manager.update_readme_quality_summary(quality_aggregates):
+            print("✅ README.md质量指标汇总已更新")
+        else:
+            print("❌ README.md质量指标汇总更新失败")
     
     def _generate_enhanced_json_data(self, 
                                    ip_dict: Dict[str, str], 

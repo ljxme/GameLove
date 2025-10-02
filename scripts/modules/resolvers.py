@@ -13,9 +13,13 @@ import re
 import ipaddress
 import concurrent.futures
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
+import json
+import urllib.request
+import urllib.parse
+import requests
 
 
 class ResolveMethod(Enum):
@@ -23,6 +27,25 @@ class ResolveMethod(Enum):
     DNS = "dns"
     PING = "ping"
     NSLOOKUP = "nslookup"
+    DOH = "doh"
+
+
+@dataclass
+class ScoringConfig:
+    """评分配置（可调权重与惩罚/加成）
+
+    字段说明：
+    - w_tcp: TCP连接耗时权重（越小越好）
+    - w_ping: Ping 延迟权重（越小越好）
+    - w_resolve: 解析耗时权重（越小越好）
+    - penalty_unreachable: 服务不可达的惩罚系数（>1 放大得分）
+    - consensus_weight: 共识加成权重（>0 时多来源同IP更优）
+    """
+    w_tcp: float = 1.0
+    w_ping: float = 1.0
+    w_resolve: float = 1.0
+    penalty_unreachable: float = 3.0
+    consensus_weight: float = 1.0
 
 
 @dataclass
@@ -45,11 +68,14 @@ class ResolveResult:
     error: Optional[str] = None
     response_time: Optional[float] = None
     is_valid_ip: bool = False
+    meta: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         """后置初始化：校验 IP 有效性"""
         if self.ip:
             self.is_valid_ip = self._validate_ip(self.ip)
+        if self.meta is None:
+            self.meta = {}
 
     def _validate_ip(self, ip: str) -> bool:
         """校验 IPv4 地址是否为有效公网地址
@@ -185,11 +211,12 @@ class NslookupResolver(IPResolver):
 class ConnectivityTester:
     """连通性测试器：测量 TCP 连接耗时/端口可达与 ping 延迟"""
 
-    def __init__(self, ping_timeout: int = 3, ping_count: int = 1, tcp_timeout: float = 1.5, service_ports: Optional[List[int]] = None):
+    def __init__(self, ping_timeout: int = 3, ping_count: int = 1, tcp_timeout: float = 1.5, service_ports: Optional[List[int]] = None, scoring_config: Optional[ScoringConfig] = None):
         self.ping_timeout = ping_timeout
         self.ping_count = ping_count
         self.tcp_timeout = tcp_timeout
         self.service_ports = service_ports or [443, 80]
+        self.scoring_config = scoring_config or ScoringConfig()
 
     def measure_ping_time(self, ip: str) -> Optional[float]:
         """测量指定 IP 的平均 ping 延迟（秒），失败返回 None"""
@@ -242,30 +269,73 @@ class ConnectivityTester:
         return False
 
     def choose_best(self, domain: str, candidates: List[ResolveResult]) -> ResolveResult:
-        """在多个成功候选中选择综合质量最优（优先TCP耗时，其次Ping，其次解析耗时）"""
+        """在多个成功候选中选择综合质量最优
+
+        评分策略：
+        - 首选 TCP 连接耗时（越小越好），其次 Ping 延迟，最后解析耗时
+        - 服务不可达（80/443 都失败）加权惩罚
+        - 共识加成：同一 IP 被多个来源解析到时降低得分
+        """
+        cfg = self.scoring_config
+        # 统计共识（相同 IP 的出现次数）
+        freq: Dict[str, int] = {}
+        conn_times: Dict[str, Optional[float]] = {}
+        reach_map: Dict[str, bool] = {}
+        for c in candidates:
+            if c.ip:
+                freq[c.ip] = freq.get(c.ip, 0) + 1
+
         best: Optional[Tuple[ResolveResult, float]] = None
         for cand in candidates:
             if not cand.ip:
                 continue
+            # 基础指标：优先 TCP，其次 Ping，其次解析耗时
             connect_time = self.measure_tcp_connect_time(cand.ip)
             if connect_time is not None:
-                score = connect_time
+                base = connect_time * cfg.w_tcp
             else:
                 latency = self.measure_ping_time(cand.ip)
-                score = latency if latency is not None else (cand.response_time or float('inf'))
+                if latency is not None:
+                    base = latency * cfg.w_ping
+                else:
+                    base = (cand.response_time or float('inf')) * cfg.w_resolve
+
+            # 可达性惩罚：不可达放大得分
+            reachable = self.is_service_reachable(cand.ip)
+            penalty = 1.0 if reachable else cfg.penalty_unreachable
+            conn_times[cand.ip] = connect_time
+            reach_map[cand.ip] = reachable
+
+            # 共识加成：同一 IP 多来源命中时折减得分
+            consensus = freq.get(cand.ip, 1)
+            bonus = 1.0 / (1 + max(consensus - 1, 0) * max(cfg.consensus_weight, 0.0001))
+
+            score = base * penalty * bonus
+
             if best is None or score < best[1]:
                 best = (cand, score)
-        return best[0] if best else candidates[0]
+
+        if best:
+            chosen = best[0]
+            ip = chosen.ip or ""
+            # 注入附加指标用于后续统计
+            if ip:
+                chosen.meta["consensus"] = freq.get(ip, 1)
+                chosen.meta["tcp_connect_time"] = conn_times.get(ip)
+                chosen.meta["service_reachable"] = reach_map.get(ip, False)
+            return chosen
+        return candidates[0]
 
 
 class SmartResolver(IPResolver):
     """智能解析器：重试、验证、并可选择最快 IP"""
 
-    def __init__(self, resolvers: List[IPResolver], max_retries: int = 2, prefer_fastest: bool = True):
+    def __init__(self, resolvers: List[IPResolver], max_retries: int = 2, prefer_fastest: bool = True, scoring_config: Optional[ScoringConfig] = None, stable_cache: Optional[object] = None):
         self.resolvers = resolvers
         self.max_retries = max_retries
         self.prefer_fastest = prefer_fastest
-        self.tester = ConnectivityTester()
+        self.tester = ConnectivityTester(scoring_config=scoring_config)
+        self.stable_cache = stable_cache
 
     def resolve(self, domain: str) -> ResolveResult:
         """依次使用各解析器，收集成功候选并选优"""
@@ -286,8 +356,8 @@ class SmartResolver(IPResolver):
         if success_candidates:
             if self.prefer_fastest:
                 augmented = self._collect_additional_candidates(domain, success_candidates)
-                if augmented:
-                    return self.tester.choose_best(domain, augmented)
+                pool = augmented if augmented else success_candidates
+                return self.tester.choose_best(domain, pool)
             return success_candidates[0]
         return best_result or ResolveResult(domain, None, None, False, error='All resolvers failed')
 
@@ -319,7 +389,78 @@ class SmartResolver(IPResolver):
         except Exception:
             # 忽略扩展失败
             pass
+        # 从稳定缓存中追加候选
+        try:
+            if self.stable_cache:
+                cached_ips: List[str] = self.stable_cache.get_candidates(domain)
+                for ip in cached_ips:
+                    if ip not in existing:
+                        rr = ResolveResult(domain=domain, ip=ip, method=ResolveMethod.DNS, success=True, response_time=None)
+                        if rr.is_valid_ip:
+                            existing[ip] = rr
+        except Exception:
+            pass
         return list(existing.values())
+
+
+class DoHResolver(IPResolver):
+    """DNS-over-HTTPS 解析器：调用公开 DoH JSON 接口解析 A 记录
+
+    兼容 Cloudflare 与 Google 接口：
+    - Cloudflare: https://cloudflare-dns.com/dns-query?name=example.com&type=A
+      需要请求头 Accept: application/dns-json
+    - Google:     https://dns.google/resolve?name=example.com&type=A
+    返回 JSON 中的 Answer 列表提取 IPv4 地址。
+    """
+
+    def __init__(self, endpoint: str, timeout: float = 4.0, headers: Optional[Dict[str, str]] = None, max_retries: int = 1, backoff_factor: float = 0.3, session: Optional[requests.Session] = None):
+        self.endpoint = endpoint.rstrip('/')
+        self.timeout = timeout
+        self.headers = headers or {"Accept": "application/dns-json", "User-Agent": "GameLove-DoH/1.0"}
+        # 连接复用：使用 Session，并设置 Keep-Alive
+        self.headers.setdefault("Connection", "keep-alive")
+        self.session = session or requests.Session()
+        # 不在 Session 覆盖 Accept，避免外部自定义 headers 被覆盖；使用每次请求 headers
+        self.max_retries = max(0, int(max_retries))
+        self.backoff_factor = max(0.0, float(backoff_factor))
+
+    def _build_url(self, domain: str) -> str:
+        params = {"name": domain, "type": "A"}
+        return f"{self.endpoint}?{urllib.parse.urlencode(params)}"
+
+    def _pick_ip(self, data: Dict[str, Any]) -> Optional[str]:
+        try:
+            answers = data.get("Answer") or []
+            for ans in answers:
+                # type 1 为 A 记录
+                if ans.get("type") == 1:
+                    ip = ans.get("data")
+                    if ip and isinstance(ip, str):
+                        return ip
+        except Exception:
+            return None
+        return None
+
+    def resolve(self, domain: str) -> ResolveResult:
+        start_time = time.time()
+        url = self._build_url(domain)
+        last_error: Optional[str] = None
+        for attempt in range(self.max_retries + 1):
+            try:
+                resp = self.session.get(url, headers=self.headers, timeout=self.timeout)
+                resp.raise_for_status()
+                data = resp.json()
+                ip = self._pick_ip(data)
+                if ip:
+                    return ResolveResult(domain, ip, ResolveMethod.DOH, True, response_time=time.time() - start_time)
+                status = data.get("Status")
+                last_error = f"No A record in Answer (status={status})" if status is not None else "No A record found"
+            except Exception as e:
+                last_error = str(e)
+            # 简单指数退避
+            if attempt < self.max_retries:
+                time.sleep(self.backoff_factor * (2 ** attempt))
+        return ResolveResult(domain, None, ResolveMethod.DOH, False, error=last_error, response_time=time.time() - start_time)
 
 
 class CompositeResolver(IPResolver):

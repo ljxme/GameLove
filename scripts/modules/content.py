@@ -145,12 +145,42 @@ class ContentGenerator:
                 "success_rate": f"{(success_count / len(p.domains) * 100 if p.domains else 0):.1f}%",
             }
 
+        # 质量指标：域级共识与可达性评分
+        domain_metrics: Dict[str, Dict[str, Any]] = {}
+        reach_scores: List[float] = []
+        consensus_vals: List[int] = []
+        for domain, result in detailed_results.items():
+            meta = getattr(result, 'meta', {}) or {}
+            consensus = int(meta.get('consensus', 1))
+            reachable = bool(meta.get('service_reachable', domain in ip_dict))
+            tcp_time = meta.get('tcp_connect_time')
+            if isinstance(tcp_time, (int, float)) and tcp_time is not None:
+                tcp_component = 1.0 / (1.0 + max(float(tcp_time), 0.0))
+                reachability_score = 0.5 * (1.0 if reachable else 0.0) + 0.5 * tcp_component
+            else:
+                reachability_score = 1.0 if reachable else 0.0
+            domain_metrics[domain] = {
+                "consensus": consensus,
+                "reachability_score": f"{reachability_score:.3f}",
+                "service_reachable": reachable,
+                "chosen_ip": result.ip,
+            }
+            reach_scores.append(reachability_score)
+            consensus_vals.append(consensus)
+
+        quality_aggregates = {
+            "reachability_avg": f"{(sum(reach_scores) / len(reach_scores)) if reach_scores else 0.0:.3f}",
+            "consensus_avg": f"{(sum(consensus_vals) / len(consensus_vals)) if consensus_vals else 0.0:.3f}",
+        }
+
         enhanced = {
             **base,
             "performance_stats": performance_stats,
             "method_stats": method_stats,
             "resolver_config": resolver_config,
             "platform_stats": platform_stats,
+            "domain_metrics": domain_metrics,
+            "quality_aggregates": quality_aggregates,
         }
 
         if platform_discovered:
@@ -215,6 +245,28 @@ def create_statistics_report_content(detailed_results: Dict[str, ResolveResult],
                             if domain in detailed_results and detailed_results[domain].success and detailed_results[domain].is_valid_ip)
         success_rate = success_count / len(platform_info.domains) * 100
         content += f"- {platform_name:<12}: {success_count}/{len(platform_info.domains)} ({success_rate:.1f}%)\n"
+
+    # 质量指标汇总（共识与可达性）
+    consensus_vals = []
+    reach_scores = []
+    for r in detailed_results.values():
+        meta = getattr(r, 'meta', {}) or {}
+        consensus = int(meta.get('consensus', 1))
+        reachable = bool(meta.get('service_reachable', r.success and r.is_valid_ip))
+        tcp_time = meta.get('tcp_connect_time')
+        if isinstance(tcp_time, (int, float)) and tcp_time is not None:
+            tcp_component = 1.0 / (1.0 + max(float(tcp_time), 0.0))
+            reachability_score = 0.5 * (1.0 if reachable else 0.0) + 0.5 * tcp_component
+        else:
+            reachability_score = 1.0 if reachable else 0.0
+        consensus_vals.append(consensus)
+        reach_scores.append(reachability_score)
+
+    reach_avg = (sum(reach_scores) / len(reach_scores)) if reach_scores else 0.0
+    consensus_avg = (sum(consensus_vals) / len(consensus_vals)) if consensus_vals else 0.0
+    content += "\n质量指标汇总:\n"
+    content += f"- 平均可达性评分: {reach_avg:.3f}\n"
+    content += f"- 平均共识值: {consensus_avg:.3f}\n"
 
     # 失败域名详情
     failed_results = [r for r in detailed_results.values() if not r.success or not r.is_valid_ip]
