@@ -1,41 +1,41 @@
 {
   "summary": {
     "total_domains": 29,
-    "success_count": 13,
-    "failed_count": 16,
-    "success_rate": "44.8%",
-    "update_time": "2025-10-02T03:01:14+08:00"
+    "success_count": 12,
+    "failed_count": 17,
+    "success_rate": "41.4%",
+    "update_time": "2025-10-02T04:27:38+08:00"
   },
   "all_hosts": {
-    "steamcommunity.com": "184.86.165.128",
-    "api.steampowered.com": "184.86.165.128",
-    "store.steampowered.com": "96.7.168.77",
-    "steamuserimages-a.akamaihd.net": "23.47.52.69",
-    "steamcdn-a.akamaihd.net": "23.47.48.78",
-    "steamstore-a.akamaihd.net": "23.47.52.71",
-    "help.steampowered.com": "184.86.165.128",
-    "origin.com": "104.69.123.190",
-    "easyanticheat.net": "104.18.2.180",
-    "ea.com": "23.52.116.192",
-    "eaassets-a.akamaihd.net": "23.47.49.55",
-    "ubisoft.com": "18.238.132.103",
-    "gog.com": "151.101.65.55"
+    "store.steampowered.com": "104.99.49.179",
+    "steamstore-a.akamaihd.net": "23.67.33.99",
+    "launcher-public-service-prod06.ol.epicgames.com": "104.18.12.27",
+    "steamuserimages-a.akamaihd.net": "23.46.216.72",
+    "help.steampowered.com": "23.59.200.146",
+    "steamcdn-a.akamaihd.net": "23.44.229.216",
+    "eaassets-a.akamaihd.net": "23.212.62.71",
+    "ubisoft.com": "18.244.214.70",
+    "battle.net": "166.117.214.166",
+    "blizzard.com": "166.117.214.166",
+    "gog.com": "151.101.1.55",
+    "rockstargames.com": "23.196.126.23"
   },
   "failed_domains": [
-    "launcher-public-service-prod06.ol.epicgames.com",
+    "api.steampowered.com",
+    "steamcommunity.com",
     "epicgames.com",
     "unrealengine.com",
     "ssl-lvlt.cdn.ea.com",
+    "origin.com",
+    "easyanticheat.net",
+    "ea.com",
     "fortnite.com",
     "static3.cdn.ubi.com",
     "ubi.com",
     "uplay.com",
     "gog-statics.com",
-    "battle.net",
     "blzstatic.cn",
-    "blizzard.com",
     "socialclub.rockstargames.com",
-    "rockstargames.com",
     "gogalaxy.com",
     "battlenet.com.cn"
   ],
@@ -45,22 +45,27 @@
     "repository": "https://github.com/artemisia1107/GameLove"
   },
   "performance_stats": {
-    "total_time": "51.37s",
-    "avg_response_time": "0.20s",
+    "total_time": "49.58s",
+    "avg_response_time": "0.08s",
     "min_response_time": "0.01s",
-    "max_response_time": "1.02s",
-    "domains_per_second": "0.56"
+    "max_response_time": "0.36s",
+    "domains_per_second": "0.58"
   },
   "method_stats": {
     "dns": {
-      "success": 13,
-      "failed": 1,
-      "total": 14
+      "success": 12,
+      "failed": 0,
+      "total": 12
     },
     "nslookup": {
-      "success": 15,
+      "success": 16,
       "failed": 0,
-      "total": 15
+      "total": 16
+    },
+    "ping": {
+      "success": 0,
+      "failed": 1,
+      "total": 1
     }
   },
   "resolver_config": {

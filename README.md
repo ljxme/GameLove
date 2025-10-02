@@ -30,26 +30,25 @@
 
 ```
 # GameLove Host Start
-184.86.165.128                 api.steampowered.com
-23.52.116.192                  ea.com
-23.47.49.55                    eaassets-a.akamaihd.net
-104.18.2.180                   easyanticheat.net
-151.101.65.55                  gog.com
-184.86.165.128                 help.steampowered.com
-104.69.123.190                 origin.com
-23.47.48.78                    steamcdn-a.akamaihd.net
-184.86.165.128                 steamcommunity.com
-23.47.52.71                    steamstore-a.akamaihd.net
-23.47.52.69                    steamuserimages-a.akamaihd.net
-96.7.168.77                    store.steampowered.com
-18.238.132.103                 ubisoft.com
-# Update time: 2025-10-02T03:01:14+08:00
+166.117.214.166                battle.net
+166.117.214.166                blizzard.com
+23.212.62.71                   eaassets-a.akamaihd.net
+151.101.1.55                   gog.com
+23.59.200.146                  help.steampowered.com
+104.18.12.27                   launcher-public-service-prod06.ol.epicgames.com
+23.196.126.23                  rockstargames.com
+23.44.229.216                  steamcdn-a.akamaihd.net
+23.67.33.99                    steamstore-a.akamaihd.net
+23.46.216.72                   steamuserimages-a.akamaihd.net
+104.99.49.179                  store.steampowered.com
+18.244.214.70                  ubisoft.com
+# Update time: 2025-10-02T04:27:38+08:00
 # Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts
 # Star me: https://github.com/artemisia1107/GameLove
 # GameLove Host End
 ```
 
-该内容会自动定时更新，数据更新时间：2025-10-02T03:01:14+08:00
+该内容会自动定时更新，数据更新时间：2025-10-02T04:27:38+08:00
 
 #### 2.1.2 修改 hosts 文件
 
