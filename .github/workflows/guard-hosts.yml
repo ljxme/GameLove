@@ -27,12 +27,14 @@ jobs:
         fi
         echo "Diff range: $RANGE"
         files=$(git diff --name-only "$RANGE" | tr -s '\n' '\n')
-        echo "files<<EOF" >> $GITHUB_OUTPUT
-        echo "$files" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+        echo "files<<EOF" >> "$GITHUB_OUTPUT"
+        echo "$files" >> "$GITHUB_OUTPUT"
+        echo "EOF" >> "$GITHUB_OUTPUT"
         protect_patterns='^hosts$|^hosts\\.json$|^scripts/hosts/'
         protected=$(echo "$files" | grep -E "$protect_patterns" || true)
-        echo "protected=$protected" >> $GITHUB_OUTPUT
+        echo "protected<<EOF" >> "$GITHUB_OUTPUT"
+        echo "$protected" >> "$GITHUB_OUTPUT"
+        echo "EOF" >> "$GITHUB_OUTPUT"
     - name: Block non-CI changes
       if: ${{ steps.changes.outputs.protected != '' && github.actor != 'github-actions[bot]' }}
       run: |
