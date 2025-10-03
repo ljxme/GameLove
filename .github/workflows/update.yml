@@ -39,7 +39,15 @@ jobs:
     - name: 生成 hosts 文件
       run: |
         cd scripts
-        python update_hosts.py
+        python update_hosts.py \
+          --workers 32 \
+          --dns-timeout 0.6 \
+          --race-workers 8 \
+          --latency-timeout 0.4 \
+          --latency-workers 24 \
+          --max-ip-probes 2 \
+          --health-retry-base 0 \
+          --health-fail-threshold 4
     
     - name: 检查是否有更新
       id: check_changes
