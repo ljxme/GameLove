@@ -30,7 +30,8 @@ jobs:
         echo "files<<EOF" >> "$GITHUB_OUTPUT"
         echo "$files" >> "$GITHUB_OUTPUT"
         echo "EOF" >> "$GITHUB_OUTPUT"
-        protect_patterns='^scripts/connectivity/'
+        # 仅保护由 CI 生成的产物，允许脚本/配置被人工修改
+        protect_patterns='^scripts/connectivity/(CONNECTIVITY\.md|connectivity_results\.json|connectivity_badge\.svg|latency_chart\.svg)$'
         protected=$(echo "$files" | grep -E "$protect_patterns" || true)
         echo "protected<<EOF" >> "$GITHUB_OUTPUT"
         echo "$protected" >> "$GITHUB_OUTPUT"
@@ -38,7 +39,7 @@ jobs:
     - name: Block non-CI changes
       if: ${{ steps.changes.outputs.protected != '' && github.actor != 'github-actions[bot]' }}
       run: |
-        echo "::error::检测到对 scripts/connectivity 目录的修改，但提交者为 ${{ github.actor }}。该目录仅由 CI 自动更新。"
+        echo "::error::检测到对 scripts/connectivity 生成产物的修改，但提交者为 ${{ github.actor }}。这些文件仅由 CI 自动更新。"
         echo "变更文件如下："
         echo "${{ steps.changes.outputs.protected }}"
         exit 1
