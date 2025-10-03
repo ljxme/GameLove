@@ -96,7 +96,7 @@ jobs:
           
           ## 🔎 连通性报告
           
-          ![Connectivity Badge](https://github.com/${{ github.repository }}/releases/download/GameLove-Hosts-${{ steps.date.outputs.tag_date }}/connectivity_badge.svg)
+          ![Connectivity Badge](https://raw.githubusercontent.com/${{ github.repository }}/main/scripts/connectivity/connectivity_badge.svg)
           
           分层连通性报告（TCP→TLS→HTTP），徽章显示 TLS 成功率。详见附件 `CONNECTIVITY.md`（分层报告）与 `connectivity_results.json`（原始数据）。
           
