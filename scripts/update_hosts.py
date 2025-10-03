@@ -482,12 +482,8 @@ def write_hosts_files(
         END_MARKER,
     ]
     def write_one(path: str, pairs: List[Tuple[str, str]], failed_domains: Optional[List[str]] = None) -> None:
-        """写出单个 hosts 文件，可附加失败域名注释。"""
+        """写出单个 hosts 文件，不写入失败域名。"""
         body = header + format_hosts_lines(pairs)
-        if failed_domains:
-            body += ['', '# Below are unresolved/failed domains (commented):']
-            for d in failed_domains:
-                body.append(f"# {FAILED_IP_PLACEHOLDER:<{README_IP_COLUMN_WIDTH}}{d}")
         body += [''] + footer + ['']
         with open(path, 'w', encoding='utf-8') as f: f.write('\n'.join(body))
     write_one(ROOT_HOSTS_PATH, all_pairs)
@@ -521,8 +517,6 @@ def update_readme_hosts_block(update_time: str, results: Dict[str, List[str]], c
         ip = (chosen.get(domain, (None,None,False))[0]) or (ips[0] if ips else '')
         if ip:
             lines.append(f"{ip:<{README_IP_COLUMN_WIDTH}}{domain}")
-        else:
-            lines.append(f"# {FAILED_IP_PLACEHOLDER:<{README_IP_COLUMN_WIDTH}}{domain}")
     lines.append(f"# Update time: {update_time}")
     lines.append(f"# Update url: {UPDATE_URL}")
     lines.append(f"# Star me: {STAR_URL}")
