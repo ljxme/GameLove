@@ -47,6 +47,53 @@ BACKOFF_FACTOR = 1.7
 MAX_WORKERS = 32  # 并发线程数（IO 密集型，适度偏大）
 
 
+def classify_platform(domain: str) -> str:
+    d = domain.lower()
+    if (
+        'steam' in d or 'steampowered.com' in d or 'steamstatic.com' in d or 'steamcommunity.com' in d
+    ):
+        return 'Steam'
+    if ('epicgames.com' in d) or ('unrealengine.com' in d):
+        return 'Epic Games'
+    if ('origin.com' in d) or ('ea.com' in d) or ('eaassets' in d):
+        return 'EA / Origin'
+    if ('ubisoft.com' in d) or ('ubi.com' in d) or ('uplay.com' in d):
+        return 'Ubisoft / Uplay'
+    if ('battle.net' in d) or ('blizzard.com' in d) or ('battlenet.com.cn' in d):
+        return 'Battle.net / Blizzard'
+    if ('gog.com' in d) or ('gogalaxy' in d):
+        return 'GOG'
+    if ('rockstargames.com' in d) or ('socialclub.rockstargames.com' in d) or ('socialclub' in d):
+        return 'Rockstar'
+    return 'Other'
+
+
+def choose_latency_for_display(r: Dict[str, Any]) -> float:
+    https = r['layers'].get('https', {})
+    http = r['layers'].get('http', {})
+    lat = None
+    if https and (https.get('latency_ms') is not None):
+        lat = https.get('latency_ms')
+    elif http and (http.get('latency_ms') is not None):
+        lat = http.get('latency_ms')
+    else:
+        lat = r['layers']['tcp']['443'].get('latency_ms') or 0.0
+    return float(lat or 0.0)
+
+
+def platform_latency_averages(results: List[Dict[str, Any]]) -> Dict[str, float]:
+    sums: Dict[str, float] = {}
+    counts: Dict[str, int] = {}
+    for r in results:
+        plat = classify_platform(r['domain'])
+        lat = choose_latency_for_display(r)
+        if lat is None:
+            continue
+        sums[plat] = sums.get(plat, 0.0) + float(lat)
+        counts[plat] = counts.get(plat, 0) + 1
+    return {k: round(sums[k] / counts[k], 2) for k in sums if counts.get(k, 0) > 0}
+
+
 def now_iso_cn() -> str:
     # 北京时间（UTC+8），格式：YYYY-MM-DD HH:MM:SS
     return datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")
@@ -293,17 +340,11 @@ def make_markdown(update_time: str, results: List[Dict[str, Any]]) -> str:
     lines = []
     lines.append(f"数据更新时间: {update_time}")
     lines.append("")
-    lines.append(f"分层统计: TLS ✅ {tls_ok}/{total} | TCP443 ✅ {tcp443_ok}/{total} | TCP80 ✅ {tcp80_ok}/{total} | HTTP(80) ✅ {http_ok}/{total} | HTTPS(443) ✅ {https_ok}/{total}")
+    lines.append(f"分层统计: TLS ✅ {tls_ok}/{total} | TCP(443) ✅ {tcp443_ok}/{total} | TCP(80) ✅ {tcp80_ok}/{total} | HTTP(80) ✅ {http_ok}/{total} | HTTPS(443) ✅ {https_ok}/{total}")
     lines.append("")
     lines.append("### 可视化")
     lines.append("")
-    lines.append("#### TLS 成功率")
-    lines.append("```mermaid")
-    lines.append("pie title TLS 成功率")
-    lines.append(f'  "成功" : {tls_ok}')
-    lines.append(f'  "失败" : {total - tls_ok}')
-    lines.append("```")
-    lines.append("")
+    # 移除饼图展示，避免视觉占用；保留分层统计文本在顶部
     lines.append("#### 延迟柱状图（Top 15）")
     lines.append("")
     # 在同目录下引用生成的延迟图 SVG
@@ -359,22 +400,13 @@ def make_badge_svg(ok: int, total: int) -> str:
 
 
 def make_latency_bar_svg(results: List[Dict[str, Any]], top_n: int = 15) -> str:
-    # 选择用于展示的延迟：优先 HTTPS，其次 HTTP
+    # 选择用于展示的延迟：优先 HTTPS，其次 HTTP，最后 TCP443
     items = []
     for r in results:
-        https = r['layers'].get('https', {})
-        http = r['layers'].get('http', {})
-        lat = None
-        if https and https.get('latency_ms') is not None:
-            lat = https.get('latency_ms')
-        elif http and http.get('latency_ms') is not None:
-            lat = http.get('latency_ms')
-        else:
-            # 退化：取 TCP443 延迟
-            lat = r['layers']['tcp']['443'].get('latency_ms') or 0.0
-        items.append({'domain': r['domain'], 'latency_ms': float(lat or 0.0)})
-    # 取 Top N 按延迟降序
-    items.sort(key=lambda x: x['latency_ms'], reverse=True)
+        lat = choose_latency_for_display(r)
+        items.append({'domain': r['domain'], 'latency_ms': lat})
+    # 取 Top N 按延迟升序（越低越好）
+    items.sort(key=lambda x: x['latency_ms'])
     items = items[:top_n]
     if not items:
         return '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="40"><text x="10" y="25" font-size="14">No data</text></svg>'
@@ -392,7 +424,7 @@ def make_latency_bar_svg(results: List[Dict[str, Any]], top_n: int = 15) -> str:
     svg_lines = []
     svg_lines.append(f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">')
     svg_lines.append('<style> .label{font-family:DejaVu Sans,Verdana,Geneva,sans-serif;font-size:12px;fill:#333} .value{font-family:DejaVu Sans,Verdana,Geneva,sans-serif;font-size:12px;fill:#555} </style>')
-    svg_lines.append(f'<text x="10" y="20" class="label">延迟柱状图（Top {len(items)}），单位 ms</text>')
+    svg_lines.append(f'<text x="10" y="20" class="label">延迟柱状图（越低越好，Top {len(items)}），单位 ms</text>')
     # bars
     y = top_pad
     for i, it in enumerate(items):
