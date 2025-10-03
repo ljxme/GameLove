@@ -451,8 +451,8 @@ def load_platform_domains() -> Dict[str, Dict[str, List[str]]]:
 
 
 def now_iso_cn() -> str:
-    """返回东八区当前时间的 ISO 字符串（到秒）。"""
-    return datetime.now(timezone(timedelta(hours=8))).isoformat(timespec='seconds')
+    """返回北京时间（UTC+8）字符串，格式：YYYY-MM-DD HH:MM:SS。"""
+    return datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def format_hosts_lines(pairs: List[Tuple[str, str]]) -> List[str]:

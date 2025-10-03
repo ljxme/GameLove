@@ -69,9 +69,9 @@
 # GameLove Host End
 ```
 
-该内容会自动定时更新，数据更新时间：2025-10-03T14:54:33+08:00
+该内容会自动定时更新，数据更新时间：2025-10-03 14:54:33（北京时间）
 
-> 政策：根目录 `hosts`、`hosts.json` 以及 `scripts/hosts/*` 仅由 CI 自动更新。请勿手动修改或在 PR 中更改这些文件，以免与自动更新产生冲突。若需触发即时更新，请在 Actions 中手动运行 `Update GameLove Hosts` 工作流。
+> Tips：根目录 `hosts`、`hosts.json` 以及 `scripts/hosts/*` 仅由 CI 自动更新。请勿手动修改或在 PR 中更改这些文件，以免与自动更新产生冲突。若需触发即时更新，请在 Actions 中手动运行 `Update GameLove Hosts` 工作流。
 
 #### 2.1.2 修改 hosts 文件
 

@@ -40,7 +40,8 @@ TLS_TIMEOUT = 0.8
 
 
 def now_iso_cn() -> str:
-    return datetime.now(timezone(timedelta(hours=8))).isoformat(timespec='seconds')
+    # 北京时间（UTC+8），格式：YYYY-MM-DD HH:MM:SS
+    return datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def parse_hosts_pairs(path: str) -> List[Tuple[str, str]]:
