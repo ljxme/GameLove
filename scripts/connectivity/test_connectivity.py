@@ -21,8 +21,10 @@ import time
 import socket
 import ssl
 import http.client
+import ipaddress
 from datetime import datetime, timezone, timedelta
 from typing import List, Tuple, Dict, Any
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
@@ -31,6 +33,7 @@ OUT_DIR = os.path.join(PROJECT_ROOT, "scripts", "connectivity")
 JSON_OUT = os.path.join(OUT_DIR, "connectivity_results.json")
 MD_OUT = os.path.join(OUT_DIR, "CONNECTIVITY.md")
 SVG_OUT = os.path.join(OUT_DIR, "connectivity_badge.svg")
+LATENCY_SVG_OUT = os.path.join(OUT_DIR, "latency_chart.svg")
 
 START_MARKER = '# GameLove Host Start'
 END_MARKER = '# GameLove Host End'
@@ -38,10 +41,27 @@ HTTP_TIMEOUT = 0.8
 TCP_TIMEOUT = 0.6
 TLS_TIMEOUT = 0.8
 
+# 针对国外站点的网络特性：增加重试与回退（指数退避）
+MAX_RETRIES = 2  # 总尝试次数=1+MAX_RETRIES（初次+重试）
+BACKOFF_FACTOR = 1.7
+MAX_WORKERS = 32  # 并发线程数（IO 密集型，适度偏大）
+
 
 def now_iso_cn() -> str:
     # 北京时间（UTC+8），格式：YYYY-MM-DD HH:MM:SS
     return datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def is_ipv6(ip: str) -> bool:
+    try:
+        return isinstance(ipaddress.ip_address(ip), ipaddress.IPv6Address)
+    except ValueError:
+        # 非法 IP，按 IPv4 处理以便抛出连接错误
+        return False
+
+
+def build_timeouts(base: float, retries: int) -> List[float]:
+    return [base * (BACKOFF_FACTOR ** i) for i in range(retries + 1)]
 
 
 def parse_hosts_pairs(path: str) -> List[Tuple[str, str]]:
@@ -67,83 +87,199 @@ def parse_hosts_pairs(path: str) -> List[Tuple[str, str]]:
     return pairs
 
 
-def test_tcp_connectivity(ip: str, port: int, timeout: float = TCP_TIMEOUT) -> Dict[str, Any]:
-    t0 = time.perf_counter()
+def test_tcp_connectivity(ip: str, port: int, timeout_base: float = TCP_TIMEOUT, attempts: int = MAX_RETRIES) -> Dict[str, Any]:
+    fam = socket.AF_INET6 if is_ipv6(ip) else socket.AF_INET
+    errors: List[str] = []
     ok = False
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(timeout)
-        s.connect((ip, port))
-        ok = True
-    except Exception:
-        ok = False
-    finally:
+    latency_ms = None
+    used_attempts = 0
+    s = None
+    for i, tmo in enumerate(build_timeouts(timeout_base, attempts)):
+        used_attempts = i
+        t0 = time.perf_counter()
         try:
-            s.close()
-        except Exception:
-            pass
-    latency_ms = (time.perf_counter() - t0) * 1000.0
+            s = socket.socket(fam, socket.SOCK_STREAM)
+            s.settimeout(tmo)
+            s.connect((ip, port))
+            ok = True
+        except Exception as e:
+            ok = False
+            errors.append(e.__class__.__name__)
+        finally:
+            try:
+                if s is not None:
+                    s.close()
+            except Exception:
+                pass
+        latency_ms = (time.perf_counter() - t0) * 1000.0
+        if ok:
+            break
     return {
         'ip': ip,
         'port': port,
         'ok': ok,
-        'latency_ms': round(latency_ms, 2),
+        'latency_ms': round(latency_ms if latency_ms is not None else 0.0, 2),
+        'retry_count': used_attempts,
+        'error': None if ok else (errors[-1] if errors else None),
     }
 
 
-def test_tls_handshake(ip: str, domain: str, timeout: float = TLS_TIMEOUT) -> Dict[str, Any]:
-    t0 = time.perf_counter()
+def test_tls_handshake(ip: str, domain: str, timeout_base: float = TLS_TIMEOUT, attempts: int = MAX_RETRIES) -> Dict[str, Any]:
+    fam = socket.AF_INET6 if is_ipv6(ip) else socket.AF_INET
+    errors: List[str] = []
     ok = False
-    try:
-        ctx = ssl.create_default_context()
-        # 可达性检测不做证书校验，避免域名与证书不匹配导致误判
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
-        raw = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        raw.settimeout(timeout)
-        raw.connect((ip, 443))
-        ssl_sock = ctx.wrap_socket(raw, server_hostname=domain)
-        # 成功握手即认为 ok
-        ok = True
+    latency_ms = None
+    used_attempts = 0
+    for i, tmo in enumerate(build_timeouts(timeout_base, attempts)):
+        used_attempts = i
+        t0 = time.perf_counter()
         try:
-            ssl_sock.close()
-        except Exception:
-            pass
-    except Exception:
-        ok = False
-    latency_ms = (time.perf_counter() - t0) * 1000.0
+            ctx = ssl.create_default_context()
+            # 可达性检测不做证书校验，避免域名与证书不匹配导致误判
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            raw = socket.socket(fam, socket.SOCK_STREAM)
+            raw.settimeout(tmo)
+            raw.connect((ip, 443))
+            ssl_sock = ctx.wrap_socket(raw, server_hostname=domain)
+            # 成功握手即认为 ok
+            ok = True
+            try:
+                ssl_sock.close()
+            except Exception:
+                pass
+        except Exception as e:
+            ok = False
+            errors.append(e.__class__.__name__)
+        latency_ms = (time.perf_counter() - t0) * 1000.0
+        if ok:
+            break
     return {
         'ip': ip,
         'domain': domain,
         'ok': ok,
-        'latency_ms': round(latency_ms, 2),
+        'latency_ms': round(latency_ms if latency_ms is not None else 0.0, 2),
+        'retry_count': used_attempts,
+        'error': None if ok else (errors[-1] if errors else None),
     }
 
 
-def test_http_connectivity(ip: str, domain: str, timeout: float = HTTP_TIMEOUT) -> Dict[str, Any]:
-    t0 = time.perf_counter()
+def test_http_connectivity(ip: str, domain: str, timeout_base: float = HTTP_TIMEOUT, attempts: int = MAX_RETRIES) -> Dict[str, Any]:
     status = 'unreachable'
     code = None
-    try:
-        conn = http.client.HTTPConnection(ip, 80, timeout=timeout)
-        conn.request('GET', '/', headers={'Host': domain, 'User-Agent': 'GameLove-Connectivity/1.0'})
-        resp = conn.getresponse()
-        code = getattr(resp, 'status', None)
-        status = 'reachable'
-    except Exception:
-        status = 'unreachable'
-    finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
-    latency_ms = (time.perf_counter() - t0) * 1000.0
+    method_used = 'HEAD'
+    errors: List[str] = []
+    latency_ms = None
+    used_attempts = 0
+    for method in ['HEAD', 'GET']:
+        for i, tmo in enumerate(build_timeouts(timeout_base, attempts)):
+            used_attempts = i
+            t0 = time.perf_counter()
+            conn = None
+            try:
+                conn = http.client.HTTPConnection(ip, 80, timeout=tmo)
+                conn.request(method, '/', headers={'Host': domain, 'User-Agent': 'GameLove-Connectivity/1.0'})
+                resp = conn.getresponse()
+                code = getattr(resp, 'status', None)
+                status = 'reachable'
+                method_used = method
+                ok = True
+            except Exception as e:
+                ok = False
+                status = 'unreachable'
+                errors.append(f'{method}:{e.__class__.__name__}')
+            finally:
+                try:
+                    if conn is not None:
+                        conn.close()
+                except Exception:
+                    pass
+            latency_ms = (time.perf_counter() - t0) * 1000.0
+            if ok:
+                break
+        if status == 'reachable':
+            break
     return {
         'ip': ip,
         'domain': domain,
         'status': status,
         'http_status': code,
-        'latency_ms': round(latency_ms, 2),
+        'latency_ms': round(latency_ms if latency_ms is not None else 0.0, 2),
+        'method': method_used,
+        'retry_count': used_attempts,
+        'error': None if status == 'reachable' else (errors[-1] if errors else None),
+    }
+
+
+def test_https_connectivity(ip: str, domain: str, timeout_base: float = TLS_TIMEOUT, attempts: int = MAX_RETRIES) -> Dict[str, Any]:
+    fam = socket.AF_INET6 if is_ipv6(ip) else socket.AF_INET
+    status = 'unreachable'
+    code = None
+    method_used = 'HEAD'
+    errors: List[str] = []
+    latency_ms = None
+    used_attempts = 0
+    for method in ['HEAD', 'GET']:
+        for i, tmo in enumerate(build_timeouts(timeout_base, attempts)):
+            used_attempts = i
+            t0 = time.perf_counter()
+            raw = None
+            ssl_sock = None
+            try:
+                ctx = ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+                raw = socket.socket(fam, socket.SOCK_STREAM)
+                raw.settimeout(tmo)
+                raw.connect((ip, 443))
+                ssl_sock = ctx.wrap_socket(raw, server_hostname=domain)
+                req = f"{method} / HTTP/1.1\r\nHost: {domain}\r\nUser-Agent: GameLove-Connectivity/1.0\r\nConnection: close\r\n\r\n".encode('ascii')
+                ssl_sock.sendall(req)
+                buf = b''
+                while b"\r\n" not in buf:
+                    chunk = ssl_sock.recv(1024)
+                    if not chunk:
+                        break
+                    buf += chunk
+                first_line = buf.split(b"\r\n", 1)[0].decode('iso-8859-1', errors='ignore')
+                parts = first_line.split()
+                if len(parts) >= 2 and parts[0].startswith('HTTP/'):
+                    try:
+                        code = int(parts[1])
+                    except Exception:
+                        code = None
+                status = 'reachable'
+                method_used = method
+                ok = True
+            except Exception as e:
+                ok = False
+                status = 'unreachable'
+                errors.append(f'{method}:{e.__class__.__name__}')
+            finally:
+                try:
+                    if ssl_sock is not None:
+                        ssl_sock.close()
+                except Exception:
+                    pass
+                try:
+                    if raw is not None:
+                        raw.close()
+                except Exception:
+                    pass
+            latency_ms = (time.perf_counter() - t0) * 1000.0
+            if ok:
+                break
+        if status == 'reachable':
+            break
+    return {
+        'ip': ip,
+        'domain': domain,
+        'status': status,
+        'http_status': code,
+        'latency_ms': round(latency_ms if latency_ms is not None else 0.0, 2),
+        'method': method_used,
+        'retry_count': used_attempts,
+        'error': None if status == 'reachable' else (errors[-1] if errors else None),
     }
 
 
@@ -153,22 +289,41 @@ def make_markdown(update_time: str, results: List[Dict[str, Any]]) -> str:
     http_ok = sum(1 for r in results if r['layers']['http']['status'] == 'reachable')
     tcp443_ok = sum(1 for r in results if r['layers']['tcp']['443']['ok'])
     tcp80_ok = sum(1 for r in results if r['layers']['tcp']['80']['ok'])
+    https_ok = sum(1 for r in results if r['layers'].get('https', {'status': 'unreachable'})['status'] == 'reachable')
     lines = []
     lines.append(f"数据更新时间: {update_time}")
     lines.append("")
-    lines.append(f"分层统计: TLS ✅ {tls_ok}/{total} | TCP443 ✅ {tcp443_ok}/{total} | TCP80 ✅ {tcp80_ok}/{total} | HTTP(80) ✅ {http_ok}/{total}")
+    lines.append(f"分层统计: TLS ✅ {tls_ok}/{total} | TCP443 ✅ {tcp443_ok}/{total} | TCP80 ✅ {tcp80_ok}/{total} | HTTP(80) ✅ {http_ok}/{total} | HTTPS(443) ✅ {https_ok}/{total}")
     lines.append("")
-    lines.append("| 域名 | IP | TCP443 | TCP80 | TLS 握手 | HTTP(80) | 状态码 | 延迟(ms) |")
-    lines.append("|---|---|---|---|---|---|---|---|")
+    lines.append("### 可视化")
+    lines.append("")
+    lines.append("#### TLS 成功率")
+    lines.append("```mermaid")
+    lines.append("pie title TLS 成功率")
+    lines.append(f'  "成功" : {tls_ok}')
+    lines.append(f'  "失败" : {total - tls_ok}')
+    lines.append("```")
+    lines.append("")
+    lines.append("#### 延迟柱状图（Top 15）")
+    lines.append("")
+    # 在同目录下引用生成的延迟图 SVG
+    lines.append("![Latency Chart](latency_chart.svg)")
+    lines.append("")
+    lines.append("| 域名 | IP | TCP443 | TCP80 | TLS 握手 | HTTP(80) | 状态码 | HTTPS(443) | 状态码(HTTPS) | 延迟(ms) |")
+    lines.append("|---|---|---|---|---|---|---|---|---|---|")
     for r in results:
         tcp443 = r['layers']['tcp']['443']
         tcp80 = r['layers']['tcp']['80']
         tls = r['layers']['tls']
         http = r['layers']['http']
+        https = r['layers'].get('https', {'status': 'unreachable', 'http_status': None})
+        # 域名列改为可点击链接：优先 HTTPS → 回退 HTTP
+        proto = 'https' if https.get('status') == 'reachable' else ('http' if http.get('status') == 'reachable' else 'https')
+        domain_link = f"[{r['domain']}]({proto}://{r['domain']}/)"
         lines.append(
-            f"| {r['domain']} | {r['ip']} | {'✅' if tcp443['ok'] else '❌'} | {'✅' if tcp80['ok'] else '❌'} | {'✅' if tls['ok'] else '❌'} | {'✅' if http['status']=='reachable' else '❌'} | {http['http_status'] if http['http_status'] is not None else '-'} | {http['latency_ms']} |")
+            f"| {domain_link} | {r['ip']} | {'✅' if tcp443['ok'] else '❌'} | {'✅' if tcp80['ok'] else '❌'} | {'✅' if tls['ok'] else '❌'} | {'✅' if http['status']=='reachable' else '❌'} | {http['http_status'] if http['http_status'] is not None else '-'} | {'✅' if https['status']=='reachable' else '❌'} | {https['http_status'] if https['http_status'] is not None else '-'} | {https['latency_ms'] if https.get('latency_ms') is not None else http['latency_ms']} |")
     lines.append("")
-    lines.append("提示：分层检测：TCP(443/80)→TLS握手→HTTP(80)。此测试为网络侧可达性参考，游戏实际连接可能需其他端口与协议。")
+    lines.append("提示：分层检测：TCP(443/80)→TLS握手→HTTP(80/HTTPS(443))。此测试为网络侧可达性参考，游戏实际连接可能需其他端口与协议。")
     return "\n".join(lines)
 
 
@@ -203,20 +358,70 @@ def make_badge_svg(ok: int, total: int) -> str:
 </svg>'''
 
 
+def make_latency_bar_svg(results: List[Dict[str, Any]], top_n: int = 15) -> str:
+    # 选择用于展示的延迟：优先 HTTPS，其次 HTTP
+    items = []
+    for r in results:
+        https = r['layers'].get('https', {})
+        http = r['layers'].get('http', {})
+        lat = None
+        if https and https.get('latency_ms') is not None:
+            lat = https.get('latency_ms')
+        elif http and http.get('latency_ms') is not None:
+            lat = http.get('latency_ms')
+        else:
+            # 退化：取 TCP443 延迟
+            lat = r['layers']['tcp']['443'].get('latency_ms') or 0.0
+        items.append({'domain': r['domain'], 'latency_ms': float(lat or 0.0)})
+    # 取 Top N 按延迟降序
+    items.sort(key=lambda x: x['latency_ms'], reverse=True)
+    items = items[:top_n]
+    if not items:
+        return '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="40"><text x="10" y="25" font-size="14">No data</text></svg>'
+    max_lat = max(i['latency_ms'] for i in items) or 1.0
+    # 画布参数
+    width = 800
+    left_pad = 180
+    right_pad = 40
+    top_pad = 30
+    bar_h = 22
+    gap = 10
+    height = top_pad + len(items) * (bar_h + gap) + 30
+    scale = (width - left_pad - right_pad) / max_lat
+    # 构建 SVG 内容
+    svg_lines = []
+    svg_lines.append(f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">')
+    svg_lines.append('<style> .label{font-family:DejaVu Sans,Verdana,Geneva,sans-serif;font-size:12px;fill:#333} .value{font-family:DejaVu Sans,Verdana,Geneva,sans-serif;font-size:12px;fill:#555} </style>')
+    svg_lines.append(f'<text x="10" y="20" class="label">延迟柱状图（Top {len(items)}），单位 ms</text>')
+    # bars
+    y = top_pad
+    for i, it in enumerate(items):
+        bar_w = round(it['latency_ms'] * scale, 2)
+        color = '#4c78a8'
+        svg_lines.append(f'<text x="10" y="{y + 16}" class="label">{it["domain"]}</text>')
+        svg_lines.append(f'<rect x="{left_pad}" y="{y}" width="{bar_w}" height="{bar_h}" fill="{color}" rx="3"/>')
+        svg_lines.append(f'<text x="{left_pad + bar_w + 8}" y="{y + 16}" class="value">{it["latency_ms"]:.2f}</text>')
+        y += bar_h + gap
+    # axis line
+    svg_lines.append(f'<line x1="{left_pad}" y1="{top_pad}" x2="{left_pad}" y2="{height-20}" stroke="#ccc"/>')
+    svg_lines.append(f'<line x1="{left_pad}" y1="{height-20}" x2="{width-right_pad}" y2="{height-20}" stroke="#ccc"/>')
+    svg_lines.append('</svg>')
+    return "\n".join(svg_lines)
+
+
 def main() -> None:
     os.makedirs(OUT_DIR, exist_ok=True)
     pairs = parse_hosts_pairs(HOSTS_PATH)
     update_time = now_iso_cn()
     results: List[Dict[str, Any]] = []
-    for ip, domain in pairs:
-        # TCP 分层
+
+    def test_one(ip: str, domain: str) -> Dict[str, Any]:
         tcp443 = test_tcp_connectivity(ip, 443)
         tcp80 = test_tcp_connectivity(ip, 80)
-        # TLS 握手（基于 443）
         tls = test_tls_handshake(ip, domain)
-        # HTTP(80)
         http = test_http_connectivity(ip, domain)
-        results.append({
+        https = test_https_connectivity(ip, domain)
+        return {
             'ip': ip,
             'domain': domain,
             'layers': {
@@ -226,8 +431,31 @@ def main() -> None:
                 },
                 'tls': tls,
                 'http': http,
+                'https': https,
             }
-        })
+        }
+
+    workers = min(MAX_WORKERS, max(4, (os.cpu_count() or 4) * 4))
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        future_to_pair = {executor.submit(test_one, ip, domain): (ip, domain) for ip, domain in pairs}
+        for fut in as_completed(future_to_pair):
+            try:
+                results.append(fut.result())
+            except Exception as e:
+                ip, domain = future_to_pair[fut]
+                results.append({
+                    'ip': ip,
+                    'domain': domain,
+                    'layers': {
+                        'tcp': {
+                            '443': {'ip': ip, 'port': 443, 'ok': False, 'latency_ms': 0.0, 'retry_count': 0, 'error': 'ExecutorError'},
+                            '80': {'ip': ip, 'port': 80, 'ok': False, 'latency_ms': 0.0, 'retry_count': 0, 'error': 'ExecutorError'},
+                        },
+                        'tls': {'ip': ip, 'domain': domain, 'ok': False, 'latency_ms': 0.0, 'retry_count': 0, 'error': 'ExecutorError'},
+                        'http': {'ip': ip, 'domain': domain, 'status': 'unreachable', 'http_status': None, 'latency_ms': 0.0, 'method': 'HEAD', 'retry_count': 0, 'error': 'ExecutorError'},
+                        'https': {'ip': ip, 'domain': domain, 'status': 'unreachable', 'http_status': None, 'latency_ms': 0.0, 'method': 'HEAD', 'retry_count': 0, 'error': 'ExecutorError'},
+                    }
+                })
     payload = {
         'update_time': update_time,
         'summary': {
@@ -236,6 +464,7 @@ def main() -> None:
             'tcp443_ok': sum(1 for r in results if r['layers']['tcp']['443']['ok']),
             'tcp80_ok': sum(1 for r in results if r['layers']['tcp']['80']['ok']),
             'http_ok': sum(1 for r in results if r['layers']['http']['status'] == 'reachable'),
+            'https_ok': sum(1 for r in results if r['layers'].get('https', {'status': 'unreachable'})['status'] == 'reachable'),
         },
         'results': results,
     }
@@ -247,7 +476,11 @@ def main() -> None:
     badge = make_badge_svg(payload['summary']['tls_ok'], payload['summary']['total'])
     with open(SVG_OUT, 'w', encoding='utf-8') as f:
         f.write(badge)
-    print(f"Connectivity report written: {MD_OUT}, {JSON_OUT}, {SVG_OUT}")
+    # 生成延迟柱状图
+    latency_svg = make_latency_bar_svg(results)
+    with open(LATENCY_SVG_OUT, 'w', encoding='utf-8') as f:
+        f.write(latency_svg)
+    print(f"Connectivity report written: {MD_OUT}, {JSON_OUT}, {SVG_OUT}, {LATENCY_SVG_OUT}")
 
 
 if __name__ == '__main__':
