@@ -221,7 +221,10 @@ def update_readme_hosts_block(update_time, results, chosen, platforms=None):
     lines.append("# Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts")
     lines.append("# Star me: https://github.com/artemisia1107/GameLove")
     lines.append(end_marker)
-    updated = content[:start_idx] + "\n" + "\n".join(lines) + "\n" + content[end_idx+len(end_marker):]
+    # 只保留主机块前后一个空行，避免页面留白过多
+    prefix = content[:start_idx].rstrip("\n \t")
+    suffix = content[end_idx+len(end_marker):].lstrip("\n \t")
+    updated = prefix + "\n" + "\n".join(lines) + "\n" + suffix
     ts_line_pattern = r"^该内容会自动定时更新，数据更新时间：.*$"
     new_ts_line = f"该内容会自动定时更新，数据更新时间：{update_time}"
     if re.search(ts_line_pattern, updated, flags=re.MULTILINE):
