@@ -1,0 +1,42 @@
+name: Guard Hosts Changes
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+    - name: Detect changes
+      id: changes
+      run: |
+        set -e
+        if [ "${{ github.event_name }}" = "push" ]; then
+          RANGE="$(git rev-parse HEAD~1)..HEAD"
+        else
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          RANGE="$BASE..$HEAD"
+        fi
+        echo "Diff range: $RANGE"
+        files=$(git diff --name-only "$RANGE" | tr -s '\n' '\n')
+        echo "files<<EOF" >> $GITHUB_OUTPUT
+        echo "$files" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        protect_patterns='^hosts$|^hosts\\.json$|^scripts/hosts/'
+        protected=$(echo "$files" | grep -E "$protect_patterns" || true)
+        echo "protected=$protected" >> $GITHUB_OUTPUT
+    - name: Block non-CI changes
+      if: ${{ steps.changes.outputs.protected != '' && github.actor != 'github-actions[bot]' }}
+      run: |
+        echo "::error::检测到对 hosts 文件的修改，但提交者为 ${{ github.actor }}。这些文件仅由 CI 自动更新。"
+        echo "变更文件如下："
+        echo "${{ steps.changes.outputs.protected }}"
+        exit 1
