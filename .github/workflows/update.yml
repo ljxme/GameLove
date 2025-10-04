@@ -100,15 +100,10 @@ jobs:
           
           分层连通性报告（TCP→TLS→HTTP），徽章显示 TLS 成功率。
           
-          附件直达：
-          - [CONNECTIVITY.md（分层报告）](https://github.com/${{ github.repository }}/releases/download/GameLove-Hosts-${{ steps.date.outputs.tag_date }}/CONNECTIVITY.md)
-          - [connectivity_results.json（原始数据）](https://github.com/${{ github.repository }}/releases/download/GameLove-Hosts-${{ steps.date.outputs.tag_date }}/connectivity_results.json)
-          - [connectivity_badge.svg（徽章）](https://github.com/${{ github.repository }}/releases/download/GameLove-Hosts-${{ steps.date.outputs.tag_date }}/connectivity_badge.svg)
           
-          另可通过 Raw 方式直接访问：
-          - https://raw.githubusercontent.com/${{ github.repository }}/main/scripts/connectivity/CONNECTIVITY.md
-          - https://raw.githubusercontent.com/${{ github.repository }}/main/scripts/connectivity/connectivity_results.json
-          - https://raw.githubusercontent.com/${{ github.repository }}/main/scripts/connectivity/connectivity_badge.svg
+          可通过 Raw 方式直接访问：
+          - [CONNECTIVITY.md](https://raw.githubusercontent.com/${{ github.repository }}/main/scripts/connectivity/CONNECTIVITY.md)
+          - [connectivity_results.json](https://raw.githubusercontent.com/${{ github.repository }}/main/scripts/connectivity/connectivity_results.json)
           
           ## 📥 快速使用
           
@@ -135,10 +130,7 @@ jobs:
           - Rockstar Games
           
           让你"爱"上游戏，解决访问慢、连接超时的问题！
-        files: |
-          scripts/connectivity/CONNECTIVITY.md
-          scripts/connectivity/connectivity_badge.svg
-          scripts/connectivity/connectivity_results.json
+        # 本次发布不附加任何连通性报告附件
         draft: false
         prerelease: false
 
