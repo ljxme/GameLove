@@ -34,42 +34,42 @@
 
 ```
 # GameLove Host Start
-23.210.138.105             steamcommunity.com
-23.62.69.145               www.steamcommunity.com
-184.31.101.220             store.steampowered.com
-23.210.138.105             api.steampowered.com
-23.54.76.12                steamcdn-a.akamaihd.net
-23.46.23.42                cdn.akamai.steamstatic.com
-23.46.23.94                community.akamai.steamstatic.com
-23.46.23.29                store.akamai.steamstatic.com
-23.46.23.11                cdn.cloudflare.steamstatic.com
-23.62.69.145               steam-chat.com
+23.1.47.193                steamcommunity.com
+104.94.122.13              www.steamcommunity.com
+23.222.197.222             store.steampowered.com
+23.54.184.97               api.steampowered.com
+23.215.0.136               steamcdn-a.akamaihd.net
+23.12.146.141              cdn.akamai.steamstatic.com
+23.12.146.143              community.akamai.steamstatic.com
+104.96.221.75              store.akamai.steamstatic.com
+23.53.11.200               cdn.cloudflare.steamstatic.com
+184.31.66.9                steam-chat.com
 104.18.13.27               launcher-public-service-prod06.ol.epicgames.com
-54.225.5.246               epicgames.com
+44.193.146.34              epicgames.com
 3.223.199.129              unrealengine.com
-44.193.146.34              fortnite.com
-104.18.2.180               easyanticheat.net
-23.61.23.194               origin.com
-184.31.100.194             ea.com
-2.21.9.108                 eaassets-a.akamaihd.net
-3.168.102.114              ubisoft.com
-18.215.45.132              ubi.com
-34.249.103.141             uplay.com
-23.196.49.60               static3.cdn.ubi.com
+54.225.5.246               fortnite.com
+104.18.3.180               easyanticheat.net
+23.12.79.194               origin.com
+23.62.162.178              ea.com
+23.32.45.6                 eaassets-a.akamaihd.net
+108.157.150.69             ubisoft.com
+3.93.141.184               ubi.com
+54.229.44.92               uplay.com
+23.62.160.240              static3.cdn.ubi.com
 166.117.114.163            battle.net
-166.117.214.166            blizzard.com
-118.31.67.128              battlenet.com.cn
-151.101.129.55             gog.com
+166.117.114.163            blizzard.com
+118.31.19.38               battlenet.com.cn
+151.101.1.55               gog.com
 77.79.249.231              gogalaxy.com
-23.60.29.24                rockstargames.com
+23.9.157.24                rockstargames.com
 104.255.105.71             socialclub.rockstargames.com
-# Update time: 2025-10-16 02:35:24
+# Update time: 2025-10-16 03:18:58
 # Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts
 # Star me: https://github.com/artemisia1107/GameLove
 # GameLove Host End
 ```
 
-该内容会自动定时更新，数据更新时间：2025-10-16 02:35:24
+该内容会自动定时更新，数据更新时间：2025-10-16 03:18:58
 
 > Tips：根目录 `hosts`、`hosts.json`、`scripts/hosts/*` 以及 `scripts/connectivity/*` 均仅由 CI 自动更新。请勿手动修改或在 PR 中更改这些文件，以免与自动更新产生冲突。若需触发即时更新，请在 Actions 中手动运行 `Update GameLove Hosts` 工作流。
 
