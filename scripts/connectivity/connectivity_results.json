@@ -1,5 +1,5 @@
 {
-  "update_time": "2025-10-22 20:54:05",
+  "update_time": "2025-10-22 21:37:03",
   "summary": {
     "total": 29,
     "tls_ok": 29,
@@ -10,15 +10,67 @@
   },
   "results": [
     {
+      "ip": "23.207.202.173",
+      "domain": "cdn.akamai.steamstatic.com",
+      "layers": {
+        "tcp": {
+          "443": {
+            "ip": "23.207.202.173",
+            "port": 443,
+            "ok": true,
+            "latency_ms": 5.51,
+            "retry_count": 0,
+            "error": null
+          },
+          "80": {
+            "ip": "23.207.202.173",
+            "port": 80,
+            "ok": true,
+            "latency_ms": 5.51,
+            "retry_count": 0,
+            "error": null
+          }
+        },
+        "tls": {
+          "ip": "23.207.202.173",
+          "domain": "cdn.akamai.steamstatic.com",
+          "ok": true,
+          "latency_ms": 242.07,
+          "retry_count": 0,
+          "error": null
+        },
+        "http": {
+          "ip": "23.207.202.173",
+          "domain": "cdn.akamai.steamstatic.com",
+          "status": "reachable",
+          "http_status": 200,
+          "latency_ms": 20.57,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        },
+        "https": {
+          "ip": "23.207.202.173",
+          "domain": "cdn.akamai.steamstatic.com",
+          "status": "reachable",
+          "http_status": 200,
+          "latency_ms": 137.77,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        }
+      }
+    },
+    {
       "ip": "35.169.98.167",
-      "domain": "fortnite.com",
+      "domain": "epicgames.com",
       "layers": {
         "tcp": {
           "443": {
             "ip": "35.169.98.167",
             "port": 443,
             "ok": true,
-            "latency_ms": 2.71,
+            "latency_ms": 5.63,
             "retry_count": 0,
             "error": null
           },
@@ -26,35 +78,35 @@
             "ip": "35.169.98.167",
             "port": 80,
             "ok": true,
-            "latency_ms": 10.85,
+            "latency_ms": 5.48,
             "retry_count": 0,
             "error": null
           }
         },
         "tls": {
           "ip": "35.169.98.167",
-          "domain": "fortnite.com",
+          "domain": "epicgames.com",
           "ok": true,
-          "latency_ms": 156.89,
+          "latency_ms": 243.02,
           "retry_count": 0,
           "error": null
         },
         "http": {
           "ip": "35.169.98.167",
-          "domain": "fortnite.com",
+          "domain": "epicgames.com",
           "status": "reachable",
           "http_status": 301,
-          "latency_ms": 23.27,
+          "latency_ms": 15.06,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
         },
         "https": {
           "ip": "35.169.98.167",
-          "domain": "fortnite.com",
+          "domain": "epicgames.com",
           "status": "reachable",
-          "http_status": 301,
-          "latency_ms": 159.39,
+          "http_status": 302,
+          "latency_ms": 154.4,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -62,155 +114,51 @@
       }
     },
     {
-      "ip": "2.18.67.81",
-      "domain": "store.akamai.steamstatic.com",
-      "layers": {
-        "tcp": {
-          "443": {
-            "ip": "2.18.67.81",
-            "port": 443,
-            "ok": true,
-            "latency_ms": 2.17,
-            "retry_count": 0,
-            "error": null
-          },
-          "80": {
-            "ip": "2.18.67.81",
-            "port": 80,
-            "ok": true,
-            "latency_ms": 1.95,
-            "retry_count": 0,
-            "error": null
-          }
-        },
-        "tls": {
-          "ip": "2.18.67.81",
-          "domain": "store.akamai.steamstatic.com",
-          "ok": true,
-          "latency_ms": 211.97,
-          "retry_count": 0,
-          "error": null
-        },
-        "http": {
-          "ip": "2.18.67.81",
-          "domain": "store.akamai.steamstatic.com",
-          "status": "reachable",
-          "http_status": 403,
-          "latency_ms": 12.44,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        },
-        "https": {
-          "ip": "2.18.67.81",
-          "domain": "store.akamai.steamstatic.com",
-          "status": "reachable",
-          "http_status": 403,
-          "latency_ms": 157.94,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        }
-      }
-    },
-    {
-      "ip": "23.215.0.17",
-      "domain": "cdn.cloudflare.steamstatic.com",
-      "layers": {
-        "tcp": {
-          "443": {
-            "ip": "23.215.0.17",
-            "port": 443,
-            "ok": true,
-            "latency_ms": 2.07,
-            "retry_count": 0,
-            "error": null
-          },
-          "80": {
-            "ip": "23.215.0.17",
-            "port": 80,
-            "ok": true,
-            "latency_ms": 2.19,
-            "retry_count": 0,
-            "error": null
-          }
-        },
-        "tls": {
-          "ip": "23.215.0.17",
-          "domain": "cdn.cloudflare.steamstatic.com",
-          "ok": true,
-          "latency_ms": 179.69,
-          "retry_count": 0,
-          "error": null
-        },
-        "http": {
-          "ip": "23.215.0.17",
-          "domain": "cdn.cloudflare.steamstatic.com",
-          "status": "reachable",
-          "http_status": 200,
-          "latency_ms": 23.26,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        },
-        "https": {
-          "ip": "23.215.0.17",
-          "domain": "cdn.cloudflare.steamstatic.com",
-          "status": "reachable",
-          "http_status": 200,
-          "latency_ms": 212.11,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        }
-      }
-    },
-    {
-      "ip": "2.18.67.78",
+      "ip": "23.12.146.130",
       "domain": "community.akamai.steamstatic.com",
       "layers": {
         "tcp": {
           "443": {
-            "ip": "2.18.67.78",
+            "ip": "23.12.146.130",
             "port": 443,
             "ok": true,
-            "latency_ms": 2.3,
+            "latency_ms": 5.65,
             "retry_count": 0,
             "error": null
           },
           "80": {
-            "ip": "2.18.67.78",
+            "ip": "23.12.146.130",
             "port": 80,
             "ok": true,
-            "latency_ms": 2.06,
+            "latency_ms": 5.52,
             "retry_count": 0,
             "error": null
           }
         },
         "tls": {
-          "ip": "2.18.67.78",
+          "ip": "23.12.146.130",
           "domain": "community.akamai.steamstatic.com",
           "ok": true,
-          "latency_ms": 273.24,
+          "latency_ms": 253.16,
           "retry_count": 0,
           "error": null
         },
         "http": {
-          "ip": "2.18.67.78",
+          "ip": "23.12.146.130",
           "domain": "community.akamai.steamstatic.com",
           "status": "reachable",
           "http_status": 403,
-          "latency_ms": 11.42,
+          "latency_ms": 14.98,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
         },
         "https": {
-          "ip": "2.18.67.78",
+          "ip": "23.12.146.130",
           "domain": "community.akamai.steamstatic.com",
           "status": "reachable",
           "http_status": 403,
-          "latency_ms": 176.56,
+          "latency_ms": 182.65,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -226,7 +174,7 @@
             "ip": "3.223.199.129",
             "port": 443,
             "ok": true,
-            "latency_ms": 2.09,
+            "latency_ms": 5.42,
             "retry_count": 0,
             "error": null
           },
@@ -234,7 +182,7 @@
             "ip": "3.223.199.129",
             "port": 80,
             "ok": true,
-            "latency_ms": 2.38,
+            "latency_ms": 5.8,
             "retry_count": 0,
             "error": null
           }
@@ -243,7 +191,7 @@
           "ip": "3.223.199.129",
           "domain": "unrealengine.com",
           "ok": true,
-          "latency_ms": 267.09,
+          "latency_ms": 257.1,
           "retry_count": 0,
           "error": null
         },
@@ -252,7 +200,7 @@
           "domain": "unrealengine.com",
           "status": "reachable",
           "http_status": 301,
-          "latency_ms": 17.16,
+          "latency_ms": 14.11,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -262,7 +210,111 @@
           "domain": "unrealengine.com",
           "status": "reachable",
           "http_status": 301,
-          "latency_ms": 179.86,
+          "latency_ms": 185.98,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        }
+      }
+    },
+    {
+      "ip": "34.226.65.237",
+      "domain": "fortnite.com",
+      "layers": {
+        "tcp": {
+          "443": {
+            "ip": "34.226.65.237",
+            "port": 443,
+            "ok": true,
+            "latency_ms": 5.49,
+            "retry_count": 0,
+            "error": null
+          },
+          "80": {
+            "ip": "34.226.65.237",
+            "port": 80,
+            "ok": true,
+            "latency_ms": 5.45,
+            "retry_count": 0,
+            "error": null
+          }
+        },
+        "tls": {
+          "ip": "34.226.65.237",
+          "domain": "fortnite.com",
+          "ok": true,
+          "latency_ms": 280.88,
+          "retry_count": 0,
+          "error": null
+        },
+        "http": {
+          "ip": "34.226.65.237",
+          "domain": "fortnite.com",
+          "status": "reachable",
+          "http_status": 301,
+          "latency_ms": 13.99,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        },
+        "https": {
+          "ip": "34.226.65.237",
+          "domain": "fortnite.com",
+          "status": "reachable",
+          "http_status": 301,
+          "latency_ms": 194.63,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        }
+      }
+    },
+    {
+      "ip": "23.207.202.198",
+      "domain": "store.akamai.steamstatic.com",
+      "layers": {
+        "tcp": {
+          "443": {
+            "ip": "23.207.202.198",
+            "port": 443,
+            "ok": true,
+            "latency_ms": 5.68,
+            "retry_count": 0,
+            "error": null
+          },
+          "80": {
+            "ip": "23.207.202.198",
+            "port": 80,
+            "ok": true,
+            "latency_ms": 5.7,
+            "retry_count": 0,
+            "error": null
+          }
+        },
+        "tls": {
+          "ip": "23.207.202.198",
+          "domain": "store.akamai.steamstatic.com",
+          "ok": true,
+          "latency_ms": 271.0,
+          "retry_count": 0,
+          "error": null
+        },
+        "http": {
+          "ip": "23.207.202.198",
+          "domain": "store.akamai.steamstatic.com",
+          "status": "reachable",
+          "http_status": 403,
+          "latency_ms": 39.08,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        },
+        "https": {
+          "ip": "23.207.202.198",
+          "domain": "store.akamai.steamstatic.com",
+          "status": "reachable",
+          "http_status": 403,
+          "latency_ms": 192.17,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -278,7 +330,7 @@
             "ip": "23.47.23.244",
             "port": 443,
             "ok": true,
-            "latency_ms": 19.62,
+            "latency_ms": 5.54,
             "retry_count": 0,
             "error": null
           },
@@ -286,7 +338,7 @@
             "ip": "23.47.23.244",
             "port": 80,
             "ok": true,
-            "latency_ms": 9.89,
+            "latency_ms": 5.52,
             "retry_count": 0,
             "error": null
           }
@@ -295,7 +347,7 @@
           "ip": "23.47.23.244",
           "domain": "origin.com",
           "ok": true,
-          "latency_ms": 247.89,
+          "latency_ms": 281.9,
           "retry_count": 0,
           "error": null
         },
@@ -304,7 +356,7 @@
           "domain": "origin.com",
           "status": "reachable",
           "http_status": 301,
-          "latency_ms": 11.06,
+          "latency_ms": 19.81,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -314,371 +366,7 @@
           "domain": "origin.com",
           "status": "reachable",
           "http_status": 301,
-          "latency_ms": 178.22,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        }
-      }
-    },
-    {
-      "ip": "23.207.202.173",
-      "domain": "cdn.akamai.steamstatic.com",
-      "layers": {
-        "tcp": {
-          "443": {
-            "ip": "23.207.202.173",
-            "port": 443,
-            "ok": true,
-            "latency_ms": 1.95,
-            "retry_count": 0,
-            "error": null
-          },
-          "80": {
-            "ip": "23.207.202.173",
-            "port": 80,
-            "ok": true,
-            "latency_ms": 2.17,
-            "retry_count": 0,
-            "error": null
-          }
-        },
-        "tls": {
-          "ip": "23.207.202.173",
-          "domain": "cdn.akamai.steamstatic.com",
-          "ok": true,
-          "latency_ms": 252.31,
-          "retry_count": 0,
-          "error": null
-        },
-        "http": {
-          "ip": "23.207.202.173",
-          "domain": "cdn.akamai.steamstatic.com",
-          "status": "reachable",
-          "http_status": 200,
-          "latency_ms": 34.05,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        },
-        "https": {
-          "ip": "23.207.202.173",
-          "domain": "cdn.akamai.steamstatic.com",
-          "status": "reachable",
-          "http_status": 200,
-          "latency_ms": 190.63,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        }
-      }
-    },
-    {
-      "ip": "34.226.65.237",
-      "domain": "epicgames.com",
-      "layers": {
-        "tcp": {
-          "443": {
-            "ip": "34.226.65.237",
-            "port": 443,
-            "ok": true,
-            "latency_ms": 2.12,
-            "retry_count": 0,
-            "error": null
-          },
-          "80": {
-            "ip": "34.226.65.237",
-            "port": 80,
-            "ok": true,
-            "latency_ms": 14.46,
-            "retry_count": 0,
-            "error": null
-          }
-        },
-        "tls": {
-          "ip": "34.226.65.237",
-          "domain": "epicgames.com",
-          "ok": true,
-          "latency_ms": 256.64,
-          "retry_count": 0,
-          "error": null
-        },
-        "http": {
-          "ip": "34.226.65.237",
-          "domain": "epicgames.com",
-          "status": "reachable",
-          "http_status": 301,
-          "latency_ms": 14.28,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        },
-        "https": {
-          "ip": "34.226.65.237",
-          "domain": "epicgames.com",
-          "status": "reachable",
-          "http_status": 302,
-          "latency_ms": 194.37,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        }
-      }
-    },
-    {
-      "ip": "104.18.13.27",
-      "domain": "launcher-public-service-prod06.ol.epicgames.com",
-      "layers": {
-        "tcp": {
-          "443": {
-            "ip": "104.18.13.27",
-            "port": 443,
-            "ok": true,
-            "latency_ms": 2.05,
-            "retry_count": 0,
-            "error": null
-          },
-          "80": {
-            "ip": "104.18.13.27",
-            "port": 80,
-            "ok": true,
-            "latency_ms": 2.59,
-            "retry_count": 0,
-            "error": null
-          }
-        },
-        "tls": {
-          "ip": "104.18.13.27",
-          "domain": "launcher-public-service-prod06.ol.epicgames.com",
-          "ok": true,
-          "latency_ms": 261.27,
-          "retry_count": 0,
-          "error": null
-        },
-        "http": {
-          "ip": "104.18.13.27",
-          "domain": "launcher-public-service-prod06.ol.epicgames.com",
-          "status": "reachable",
-          "http_status": 404,
-          "latency_ms": 19.04,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        },
-        "https": {
-          "ip": "104.18.13.27",
-          "domain": "launcher-public-service-prod06.ol.epicgames.com",
-          "status": "reachable",
-          "http_status": 404,
-          "latency_ms": 232.93,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        }
-      }
-    },
-    {
-      "ip": "104.18.3.180",
-      "domain": "easyanticheat.net",
-      "layers": {
-        "tcp": {
-          "443": {
-            "ip": "104.18.3.180",
-            "port": 443,
-            "ok": true,
-            "latency_ms": 2.35,
-            "retry_count": 0,
-            "error": null
-          },
-          "80": {
-            "ip": "104.18.3.180",
-            "port": 80,
-            "ok": true,
-            "latency_ms": 1.97,
-            "retry_count": 0,
-            "error": null
-          }
-        },
-        "tls": {
-          "ip": "104.18.3.180",
-          "domain": "easyanticheat.net",
-          "ok": true,
-          "latency_ms": 265.11,
-          "retry_count": 0,
-          "error": null
-        },
-        "http": {
-          "ip": "104.18.3.180",
-          "domain": "easyanticheat.net",
-          "status": "reachable",
-          "http_status": 301,
-          "latency_ms": 38.31,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        },
-        "https": {
-          "ip": "104.18.3.180",
-          "domain": "easyanticheat.net",
-          "status": "reachable",
-          "http_status": 301,
-          "latency_ms": 247.92,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        }
-      }
-    },
-    {
-      "ip": "23.49.176.119",
-      "domain": "steamcommunity.com",
-      "layers": {
-        "tcp": {
-          "443": {
-            "ip": "23.49.176.119",
-            "port": 443,
-            "ok": true,
-            "latency_ms": 2.43,
-            "retry_count": 0,
-            "error": null
-          },
-          "80": {
-            "ip": "23.49.176.119",
-            "port": 80,
-            "ok": true,
-            "latency_ms": 2.14,
-            "retry_count": 0,
-            "error": null
-          }
-        },
-        "tls": {
-          "ip": "23.49.176.119",
-          "domain": "steamcommunity.com",
-          "ok": true,
-          "latency_ms": 222.59,
-          "retry_count": 0,
-          "error": null
-        },
-        "http": {
-          "ip": "23.49.176.119",
-          "domain": "steamcommunity.com",
-          "status": "reachable",
-          "http_status": 302,
-          "latency_ms": 20.87,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        },
-        "https": {
-          "ip": "23.49.176.119",
-          "domain": "steamcommunity.com",
-          "status": "reachable",
-          "http_status": 200,
-          "latency_ms": 332.78,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        }
-      }
-    },
-    {
-      "ip": "23.49.176.119",
-      "domain": "api.steampowered.com",
-      "layers": {
-        "tcp": {
-          "443": {
-            "ip": "23.49.176.119",
-            "port": 443,
-            "ok": true,
-            "latency_ms": 6.48,
-            "retry_count": 0,
-            "error": null
-          },
-          "80": {
-            "ip": "23.49.176.119",
-            "port": 80,
-            "ok": true,
-            "latency_ms": 7.61,
-            "retry_count": 0,
-            "error": null
-          }
-        },
-        "tls": {
-          "ip": "23.49.176.119",
-          "domain": "api.steampowered.com",
-          "ok": true,
-          "latency_ms": 222.98,
-          "retry_count": 0,
-          "error": null
-        },
-        "http": {
-          "ip": "23.49.176.119",
-          "domain": "api.steampowered.com",
-          "status": "reachable",
-          "http_status": 404,
-          "latency_ms": 96.35,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        },
-        "https": {
-          "ip": "23.49.176.119",
-          "domain": "api.steampowered.com",
-          "status": "reachable",
-          "http_status": 404,
-          "latency_ms": 298.86,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        }
-      }
-    },
-    {
-      "ip": "23.213.69.74",
-      "domain": "steam-chat.com",
-      "layers": {
-        "tcp": {
-          "443": {
-            "ip": "23.213.69.74",
-            "port": 443,
-            "ok": true,
-            "latency_ms": 2.06,
-            "retry_count": 0,
-            "error": null
-          },
-          "80": {
-            "ip": "23.213.69.74",
-            "port": 80,
-            "ok": true,
-            "latency_ms": 2.52,
-            "retry_count": 0,
-            "error": null
-          }
-        },
-        "tls": {
-          "ip": "23.213.69.74",
-          "domain": "steam-chat.com",
-          "ok": true,
-          "latency_ms": 225.41,
-          "retry_count": 0,
-          "error": null
-        },
-        "http": {
-          "ip": "23.213.69.74",
-          "domain": "steam-chat.com",
-          "status": "reachable",
-          "http_status": 302,
-          "latency_ms": 140.67,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        },
-        "https": {
-          "ip": "23.213.69.74",
-          "domain": "steam-chat.com",
-          "status": "reachable",
-          "http_status": 404,
-          "latency_ms": 267.83,
+          "latency_ms": 237.3,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -694,7 +382,7 @@
             "ip": "23.220.249.201",
             "port": 443,
             "ok": true,
-            "latency_ms": 7.52,
+            "latency_ms": 10.94,
             "retry_count": 0,
             "error": null
           },
@@ -702,7 +390,7 @@
             "ip": "23.220.249.201",
             "port": 80,
             "ok": true,
-            "latency_ms": 17.36,
+            "latency_ms": 15.58,
             "retry_count": 0,
             "error": null
           }
@@ -711,7 +399,7 @@
           "ip": "23.220.249.201",
           "domain": "steamcdn-a.akamaihd.net",
           "ok": true,
-          "latency_ms": 299.12,
+          "latency_ms": 239.48,
           "retry_count": 0,
           "error": null
         },
@@ -720,7 +408,7 @@
           "domain": "steamcdn-a.akamaihd.net",
           "status": "reachable",
           "http_status": 200,
-          "latency_ms": 95.1,
+          "latency_ms": 33.12,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -730,7 +418,7 @@
           "domain": "steamcdn-a.akamaihd.net",
           "status": "reachable",
           "http_status": 200,
-          "latency_ms": 227.72,
+          "latency_ms": 260.52,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -738,51 +426,51 @@
       }
     },
     {
-      "ip": "173.222.170.5",
-      "domain": "ea.com",
+      "ip": "2.18.67.85",
+      "domain": "cdn.cloudflare.steamstatic.com",
       "layers": {
         "tcp": {
           "443": {
-            "ip": "173.222.170.5",
+            "ip": "2.18.67.85",
             "port": 443,
             "ok": true,
-            "latency_ms": 14.77,
+            "latency_ms": 5.48,
             "retry_count": 0,
             "error": null
           },
           "80": {
-            "ip": "173.222.170.5",
+            "ip": "2.18.67.85",
             "port": 80,
             "ok": true,
-            "latency_ms": 2.09,
+            "latency_ms": 5.5,
             "retry_count": 0,
             "error": null
           }
         },
         "tls": {
-          "ip": "173.222.170.5",
-          "domain": "ea.com",
+          "ip": "2.18.67.85",
+          "domain": "cdn.cloudflare.steamstatic.com",
           "ok": true,
-          "latency_ms": 150.02,
+          "latency_ms": 286.9,
           "retry_count": 0,
           "error": null
         },
         "http": {
-          "ip": "173.222.170.5",
-          "domain": "ea.com",
+          "ip": "2.18.67.85",
+          "domain": "cdn.cloudflare.steamstatic.com",
           "status": "reachable",
-          "http_status": 301,
-          "latency_ms": 8.06,
+          "http_status": 200,
+          "latency_ms": 40.0,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
         },
         "https": {
-          "ip": "173.222.170.5",
-          "domain": "ea.com",
+          "ip": "2.18.67.85",
+          "domain": "cdn.cloudflare.steamstatic.com",
           "status": "reachable",
-          "http_status": 301,
-          "latency_ms": 114.88,
+          "http_status": 200,
+          "latency_ms": 222.1,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -790,51 +478,51 @@
       }
     },
     {
-      "ip": "44.205.118.238",
-      "domain": "ubi.com",
+      "ip": "104.18.2.180",
+      "domain": "easyanticheat.net",
       "layers": {
         "tcp": {
           "443": {
-            "ip": "44.205.118.238",
+            "ip": "104.18.2.180",
             "port": 443,
             "ok": true,
-            "latency_ms": 6.77,
+            "latency_ms": 5.39,
             "retry_count": 0,
             "error": null
           },
           "80": {
-            "ip": "44.205.118.238",
+            "ip": "104.18.2.180",
             "port": 80,
             "ok": true,
-            "latency_ms": 2.71,
+            "latency_ms": 5.34,
             "retry_count": 0,
             "error": null
           }
         },
         "tls": {
-          "ip": "44.205.118.238",
-          "domain": "ubi.com",
+          "ip": "104.18.2.180",
+          "domain": "easyanticheat.net",
           "ok": true,
-          "latency_ms": 140.62,
+          "latency_ms": 254.74,
           "retry_count": 0,
           "error": null
         },
         "http": {
-          "ip": "44.205.118.238",
-          "domain": "ubi.com",
+          "ip": "104.18.2.180",
+          "domain": "easyanticheat.net",
           "status": "reachable",
           "http_status": 301,
-          "latency_ms": 8.79,
+          "latency_ms": 34.47,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
         },
         "https": {
-          "ip": "44.205.118.238",
-          "domain": "ubi.com",
+          "ip": "104.18.2.180",
+          "domain": "easyanticheat.net",
           "status": "reachable",
           "http_status": 301,
-          "latency_ms": 71.2,
+          "latency_ms": 284.6,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -842,51 +530,155 @@
       }
     },
     {
-      "ip": "104.86.83.41",
+      "ip": "104.18.12.27",
+      "domain": "launcher-public-service-prod06.ol.epicgames.com",
+      "layers": {
+        "tcp": {
+          "443": {
+            "ip": "104.18.12.27",
+            "port": 443,
+            "ok": true,
+            "latency_ms": 5.43,
+            "retry_count": 0,
+            "error": null
+          },
+          "80": {
+            "ip": "104.18.12.27",
+            "port": 80,
+            "ok": true,
+            "latency_ms": 5.48,
+            "retry_count": 0,
+            "error": null
+          }
+        },
+        "tls": {
+          "ip": "104.18.12.27",
+          "domain": "launcher-public-service-prod06.ol.epicgames.com",
+          "ok": true,
+          "latency_ms": 246.74,
+          "retry_count": 0,
+          "error": null
+        },
+        "http": {
+          "ip": "104.18.12.27",
+          "domain": "launcher-public-service-prod06.ol.epicgames.com",
+          "status": "reachable",
+          "http_status": 404,
+          "latency_ms": 47.94,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        },
+        "https": {
+          "ip": "104.18.12.27",
+          "domain": "launcher-public-service-prod06.ol.epicgames.com",
+          "status": "reachable",
+          "http_status": 404,
+          "latency_ms": 288.08,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        }
+      }
+    },
+    {
+      "ip": "104.94.122.13",
+      "domain": "steam-chat.com",
+      "layers": {
+        "tcp": {
+          "443": {
+            "ip": "104.94.122.13",
+            "port": 443,
+            "ok": true,
+            "latency_ms": 5.45,
+            "retry_count": 0,
+            "error": null
+          },
+          "80": {
+            "ip": "104.94.122.13",
+            "port": 80,
+            "ok": true,
+            "latency_ms": 5.33,
+            "retry_count": 0,
+            "error": null
+          }
+        },
+        "tls": {
+          "ip": "104.94.122.13",
+          "domain": "steam-chat.com",
+          "ok": true,
+          "latency_ms": 275.43,
+          "retry_count": 0,
+          "error": null
+        },
+        "http": {
+          "ip": "104.94.122.13",
+          "domain": "steam-chat.com",
+          "status": "reachable",
+          "http_status": 302,
+          "latency_ms": 91.56,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        },
+        "https": {
+          "ip": "104.94.122.13",
+          "domain": "steam-chat.com",
+          "status": "reachable",
+          "http_status": 404,
+          "latency_ms": 283.99,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        }
+      }
+    },
+    {
+      "ip": "104.94.122.13",
       "domain": "www.steamcommunity.com",
       "layers": {
         "tcp": {
           "443": {
-            "ip": "104.86.83.41",
+            "ip": "104.94.122.13",
             "port": 443,
             "ok": true,
-            "latency_ms": 2.7,
+            "latency_ms": 5.78,
             "retry_count": 0,
             "error": null
           },
           "80": {
-            "ip": "104.86.83.41",
+            "ip": "104.94.122.13",
             "port": 80,
             "ok": true,
-            "latency_ms": 1.81,
+            "latency_ms": 5.57,
             "retry_count": 0,
             "error": null
           }
         },
         "tls": {
-          "ip": "104.86.83.41",
+          "ip": "104.94.122.13",
           "domain": "www.steamcommunity.com",
           "ok": true,
-          "latency_ms": 201.46,
+          "latency_ms": 289.56,
           "retry_count": 0,
           "error": null
         },
         "http": {
-          "ip": "104.86.83.41",
+          "ip": "104.94.122.13",
           "domain": "www.steamcommunity.com",
           "status": "reachable",
           "http_status": 302,
-          "latency_ms": 108.8,
+          "latency_ms": 96.41,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
         },
         "https": {
-          "ip": "104.86.83.41",
+          "ip": "104.94.122.13",
           "domain": "www.steamcommunity.com",
           "status": "reachable",
           "http_status": 302,
-          "latency_ms": 407.25,
+          "latency_ms": 276.73,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -894,51 +686,51 @@
       }
     },
     {
-      "ip": "18.67.76.67",
-      "domain": "ubisoft.com",
+      "ip": "23.214.233.226",
+      "domain": "steamcommunity.com",
       "layers": {
         "tcp": {
           "443": {
-            "ip": "18.67.76.67",
+            "ip": "23.214.233.226",
             "port": 443,
             "ok": true,
-            "latency_ms": 3.58,
+            "latency_ms": 5.82,
             "retry_count": 0,
             "error": null
           },
           "80": {
-            "ip": "18.67.76.67",
+            "ip": "23.214.233.226",
             "port": 80,
             "ok": true,
-            "latency_ms": 1.47,
+            "latency_ms": 5.65,
             "retry_count": 0,
             "error": null
           }
         },
         "tls": {
-          "ip": "18.67.76.67",
-          "domain": "ubisoft.com",
+          "ip": "23.214.233.226",
+          "domain": "steamcommunity.com",
           "ok": true,
-          "latency_ms": 182.19,
+          "latency_ms": 262.73,
           "retry_count": 0,
           "error": null
         },
         "http": {
-          "ip": "18.67.76.67",
-          "domain": "ubisoft.com",
+          "ip": "23.214.233.226",
+          "domain": "steamcommunity.com",
           "status": "reachable",
-          "http_status": 301,
-          "latency_ms": 26.74,
+          "http_status": 302,
+          "latency_ms": 20.82,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
         },
         "https": {
-          "ip": "18.67.76.67",
-          "domain": "ubisoft.com",
+          "ip": "23.214.233.226",
+          "domain": "steamcommunity.com",
           "status": "reachable",
-          "http_status": 301,
-          "latency_ms": 103.13,
+          "http_status": 200,
+          "latency_ms": 390.2,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -946,51 +738,311 @@
       }
     },
     {
-      "ip": "166.117.214.166",
+      "ip": "23.214.233.226",
+      "domain": "api.steampowered.com",
+      "layers": {
+        "tcp": {
+          "443": {
+            "ip": "23.214.233.226",
+            "port": 443,
+            "ok": true,
+            "latency_ms": 5.65,
+            "retry_count": 0,
+            "error": null
+          },
+          "80": {
+            "ip": "23.214.233.226",
+            "port": 80,
+            "ok": true,
+            "latency_ms": 5.66,
+            "retry_count": 0,
+            "error": null
+          }
+        },
+        "tls": {
+          "ip": "23.214.233.226",
+          "domain": "api.steampowered.com",
+          "ok": true,
+          "latency_ms": 252.28,
+          "retry_count": 0,
+          "error": null
+        },
+        "http": {
+          "ip": "23.214.233.226",
+          "domain": "api.steampowered.com",
+          "status": "reachable",
+          "http_status": 404,
+          "latency_ms": 88.48,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        },
+        "https": {
+          "ip": "23.214.233.226",
+          "domain": "api.steampowered.com",
+          "status": "reachable",
+          "http_status": 404,
+          "latency_ms": 357.5,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        }
+      }
+    },
+    {
+      "ip": "23.34.124.190",
+      "domain": "ea.com",
+      "layers": {
+        "tcp": {
+          "443": {
+            "ip": "23.34.124.190",
+            "port": 443,
+            "ok": true,
+            "latency_ms": 8.79,
+            "retry_count": 0,
+            "error": null
+          },
+          "80": {
+            "ip": "23.34.124.190",
+            "port": 80,
+            "ok": true,
+            "latency_ms": 5.93,
+            "retry_count": 0,
+            "error": null
+          }
+        },
+        "tls": {
+          "ip": "23.34.124.190",
+          "domain": "ea.com",
+          "ok": true,
+          "latency_ms": 139.45,
+          "retry_count": 0,
+          "error": null
+        },
+        "http": {
+          "ip": "23.34.124.190",
+          "domain": "ea.com",
+          "status": "reachable",
+          "http_status": 301,
+          "latency_ms": 14.79,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        },
+        "https": {
+          "ip": "23.34.124.190",
+          "domain": "ea.com",
+          "status": "reachable",
+          "http_status": 301,
+          "latency_ms": 127.68,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        }
+      }
+    },
+    {
+      "ip": "54.80.124.129",
+      "domain": "ubi.com",
+      "layers": {
+        "tcp": {
+          "443": {
+            "ip": "54.80.124.129",
+            "port": 443,
+            "ok": true,
+            "latency_ms": 9.69,
+            "retry_count": 0,
+            "error": null
+          },
+          "80": {
+            "ip": "54.80.124.129",
+            "port": 80,
+            "ok": true,
+            "latency_ms": 6.0,
+            "retry_count": 0,
+            "error": null
+          }
+        },
+        "tls": {
+          "ip": "54.80.124.129",
+          "domain": "ubi.com",
+          "ok": true,
+          "latency_ms": 122.54,
+          "retry_count": 0,
+          "error": null
+        },
+        "http": {
+          "ip": "54.80.124.129",
+          "domain": "ubi.com",
+          "status": "reachable",
+          "http_status": 301,
+          "latency_ms": 12.9,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        },
+        "https": {
+          "ip": "54.80.124.129",
+          "domain": "ubi.com",
+          "status": "reachable",
+          "http_status": 301,
+          "latency_ms": 109.1,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        }
+      }
+    },
+    {
+      "ip": "166.117.114.163",
+      "domain": "battle.net",
+      "layers": {
+        "tcp": {
+          "443": {
+            "ip": "166.117.114.163",
+            "port": 443,
+            "ok": true,
+            "latency_ms": 5.34,
+            "retry_count": 0,
+            "error": null
+          },
+          "80": {
+            "ip": "166.117.114.163",
+            "port": 80,
+            "ok": true,
+            "latency_ms": 5.28,
+            "retry_count": 0,
+            "error": null
+          }
+        },
+        "tls": {
+          "ip": "166.117.114.163",
+          "domain": "battle.net",
+          "ok": true,
+          "latency_ms": 112.68,
+          "retry_count": 0,
+          "error": null
+        },
+        "http": {
+          "ip": "166.117.114.163",
+          "domain": "battle.net",
+          "status": "reachable",
+          "http_status": 301,
+          "latency_ms": 21.99,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        },
+        "https": {
+          "ip": "166.117.114.163",
+          "domain": "battle.net",
+          "status": "reachable",
+          "http_status": 301,
+          "latency_ms": 96.31,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        }
+      }
+    },
+    {
+      "ip": "23.220.116.138",
+      "domain": "store.steampowered.com",
+      "layers": {
+        "tcp": {
+          "443": {
+            "ip": "23.220.116.138",
+            "port": 443,
+            "ok": true,
+            "latency_ms": 5.49,
+            "retry_count": 0,
+            "error": null
+          },
+          "80": {
+            "ip": "23.220.116.138",
+            "port": 80,
+            "ok": true,
+            "latency_ms": 5.49,
+            "retry_count": 0,
+            "error": null
+          }
+        },
+        "tls": {
+          "ip": "23.220.116.138",
+          "domain": "store.steampowered.com",
+          "ok": true,
+          "latency_ms": 257.95,
+          "retry_count": 0,
+          "error": null
+        },
+        "http": {
+          "ip": "23.220.116.138",
+          "domain": "store.steampowered.com",
+          "status": "reachable",
+          "http_status": 302,
+          "latency_ms": 92.5,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        },
+        "https": {
+          "ip": "23.220.116.138",
+          "domain": "store.steampowered.com",
+          "status": "reachable",
+          "http_status": 200,
+          "latency_ms": 443.77,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        }
+      }
+    },
+    {
+      "ip": "166.117.114.163",
       "domain": "blizzard.com",
       "layers": {
         "tcp": {
           "443": {
-            "ip": "166.117.214.166",
+            "ip": "166.117.114.163",
             "port": 443,
             "ok": true,
-            "latency_ms": 4.48,
+            "latency_ms": 11.47,
             "retry_count": 0,
             "error": null
           },
           "80": {
-            "ip": "166.117.214.166",
+            "ip": "166.117.114.163",
             "port": 80,
             "ok": true,
-            "latency_ms": 9.01,
+            "latency_ms": 5.79,
             "retry_count": 0,
             "error": null
           }
         },
         "tls": {
-          "ip": "166.117.214.166",
+          "ip": "166.117.114.163",
           "domain": "blizzard.com",
           "ok": true,
-          "latency_ms": 146.88,
+          "latency_ms": 114.55,
           "retry_count": 0,
           "error": null
         },
         "http": {
-          "ip": "166.117.214.166",
+          "ip": "166.117.114.163",
           "domain": "blizzard.com",
           "status": "reachable",
           "http_status": 302,
-          "latency_ms": 14.88,
+          "latency_ms": 15.26,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
         },
         "https": {
-          "ip": "166.117.214.166",
+          "ip": "166.117.114.163",
           "domain": "blizzard.com",
           "status": "reachable",
           "http_status": 302,
-          "latency_ms": 89.83,
+          "latency_ms": 99.62,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -998,155 +1050,51 @@
       }
     },
     {
-      "ip": "23.9.157.24",
+      "ip": "96.7.20.214",
       "domain": "rockstargames.com",
       "layers": {
         "tcp": {
           "443": {
-            "ip": "23.9.157.24",
+            "ip": "96.7.20.214",
             "port": 443,
             "ok": true,
-            "latency_ms": 2.23,
+            "latency_ms": 5.71,
             "retry_count": 0,
             "error": null
           },
           "80": {
-            "ip": "23.9.157.24",
+            "ip": "96.7.20.214",
             "port": 80,
             "ok": true,
-            "latency_ms": 11.28,
+            "latency_ms": 6.94,
             "retry_count": 0,
             "error": null
           }
         },
         "tls": {
-          "ip": "23.9.157.24",
+          "ip": "96.7.20.214",
           "domain": "rockstargames.com",
           "ok": true,
-          "latency_ms": 109.05,
+          "latency_ms": 97.04,
           "retry_count": 0,
           "error": null
         },
         "http": {
-          "ip": "23.9.157.24",
+          "ip": "96.7.20.214",
           "domain": "rockstargames.com",
           "status": "reachable",
           "http_status": 301,
-          "latency_ms": 23.81,
+          "latency_ms": 12.38,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
         },
         "https": {
-          "ip": "23.9.157.24",
+          "ip": "96.7.20.214",
           "domain": "rockstargames.com",
           "status": "reachable",
           "http_status": 301,
-          "latency_ms": 54.93,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        }
-      }
-    },
-    {
-      "ip": "151.101.1.55",
-      "domain": "gog.com",
-      "layers": {
-        "tcp": {
-          "443": {
-            "ip": "151.101.1.55",
-            "port": 443,
-            "ok": true,
-            "latency_ms": 1.48,
-            "retry_count": 0,
-            "error": null
-          },
-          "80": {
-            "ip": "151.101.1.55",
-            "port": 80,
-            "ok": true,
-            "latency_ms": 3.29,
-            "retry_count": 0,
-            "error": null
-          }
-        },
-        "tls": {
-          "ip": "151.101.1.55",
-          "domain": "gog.com",
-          "ok": true,
-          "latency_ms": 90.92,
-          "retry_count": 0,
-          "error": null
-        },
-        "http": {
-          "ip": "151.101.1.55",
-          "domain": "gog.com",
-          "status": "reachable",
-          "http_status": 301,
-          "latency_ms": 6.03,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        },
-        "https": {
-          "ip": "151.101.1.55",
-          "domain": "gog.com",
-          "status": "reachable",
-          "http_status": 301,
-          "latency_ms": 204.64,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        }
-      }
-    },
-    {
-      "ip": "104.255.105.71",
-      "domain": "socialclub.rockstargames.com",
-      "layers": {
-        "tcp": {
-          "443": {
-            "ip": "104.255.105.71",
-            "port": 443,
-            "ok": true,
-            "latency_ms": 8.64,
-            "retry_count": 0,
-            "error": null
-          },
-          "80": {
-            "ip": "104.255.105.71",
-            "port": 80,
-            "ok": true,
-            "latency_ms": 12.18,
-            "retry_count": 0,
-            "error": null
-          }
-        },
-        "tls": {
-          "ip": "104.255.105.71",
-          "domain": "socialclub.rockstargames.com",
-          "ok": true,
-          "latency_ms": 101.38,
-          "retry_count": 0,
-          "error": null
-        },
-        "http": {
-          "ip": "104.255.105.71",
-          "domain": "socialclub.rockstargames.com",
-          "status": "reachable",
-          "http_status": 301,
-          "latency_ms": 14.22,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        },
-        "https": {
-          "ip": "104.255.105.71",
-          "domain": "socialclub.rockstargames.com",
-          "status": "reachable",
-          "http_status": 307,
-          "latency_ms": 107.3,
+          "latency_ms": 71.66,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -1162,7 +1110,7 @@
             "ip": "23.12.45.114",
             "port": 443,
             "ok": true,
-            "latency_ms": 7.96,
+            "latency_ms": 11.93,
             "retry_count": 0,
             "error": null
           },
@@ -1170,7 +1118,7 @@
             "ip": "23.12.45.114",
             "port": 80,
             "ok": true,
-            "latency_ms": 7.16,
+            "latency_ms": 14.38,
             "retry_count": 0,
             "error": null
           }
@@ -1179,7 +1127,7 @@
           "ip": "23.12.45.114",
           "domain": "static3.cdn.ubi.com",
           "ok": true,
-          "latency_ms": 151.23,
+          "latency_ms": 103.91,
           "retry_count": 0,
           "error": null
         },
@@ -1188,7 +1136,7 @@
           "domain": "static3.cdn.ubi.com",
           "status": "reachable",
           "http_status": 401,
-          "latency_ms": 118.6,
+          "latency_ms": 100.06,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -1198,7 +1146,7 @@
           "domain": "static3.cdn.ubi.com",
           "status": "reachable",
           "http_status": 401,
-          "latency_ms": 144.04,
+          "latency_ms": 184.61,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -1206,51 +1154,103 @@
       }
     },
     {
-      "ip": "23.202.61.115",
+      "ip": "104.255.105.71",
+      "domain": "socialclub.rockstargames.com",
+      "layers": {
+        "tcp": {
+          "443": {
+            "ip": "104.255.105.71",
+            "port": 443,
+            "ok": true,
+            "latency_ms": 10.96,
+            "retry_count": 0,
+            "error": null
+          },
+          "80": {
+            "ip": "104.255.105.71",
+            "port": 80,
+            "ok": true,
+            "latency_ms": 15.02,
+            "retry_count": 0,
+            "error": null
+          }
+        },
+        "tls": {
+          "ip": "104.255.105.71",
+          "domain": "socialclub.rockstargames.com",
+          "ok": true,
+          "latency_ms": 129.55,
+          "retry_count": 0,
+          "error": null
+        },
+        "http": {
+          "ip": "104.255.105.71",
+          "domain": "socialclub.rockstargames.com",
+          "status": "reachable",
+          "http_status": 301,
+          "latency_ms": 22.41,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        },
+        "https": {
+          "ip": "104.255.105.71",
+          "domain": "socialclub.rockstargames.com",
+          "status": "reachable",
+          "http_status": 307,
+          "latency_ms": 80.84,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        }
+      }
+    },
+    {
+      "ip": "23.33.44.237",
       "domain": "eaassets-a.akamaihd.net",
       "layers": {
         "tcp": {
           "443": {
-            "ip": "23.202.61.115",
+            "ip": "23.33.44.237",
             "port": 443,
             "ok": true,
-            "latency_ms": 7.24,
+            "latency_ms": 11.48,
             "retry_count": 0,
             "error": null
           },
           "80": {
-            "ip": "23.202.61.115",
+            "ip": "23.33.44.237",
             "port": 80,
             "ok": true,
-            "latency_ms": 12.55,
+            "latency_ms": 18.12,
             "retry_count": 0,
             "error": null
           }
         },
         "tls": {
-          "ip": "23.202.61.115",
+          "ip": "23.33.44.237",
           "domain": "eaassets-a.akamaihd.net",
           "ok": true,
-          "latency_ms": 177.74,
+          "latency_ms": 148.88,
           "retry_count": 0,
           "error": null
         },
         "http": {
-          "ip": "23.202.61.115",
+          "ip": "23.33.44.237",
           "domain": "eaassets-a.akamaihd.net",
           "status": "reachable",
           "http_status": 404,
-          "latency_ms": 244.45,
+          "latency_ms": 283.79,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
         },
         "https": {
-          "ip": "23.202.61.115",
+          "ip": "23.33.44.237",
           "domain": "eaassets-a.akamaihd.net",
           "status": "reachable",
           "http_status": 404,
-          "latency_ms": 87.42,
+          "latency_ms": 127.22,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -1258,51 +1258,51 @@
       }
     },
     {
-      "ip": "23.48.9.171",
-      "domain": "store.steampowered.com",
+      "ip": "108.157.150.15",
+      "domain": "ubisoft.com",
       "layers": {
         "tcp": {
           "443": {
-            "ip": "23.48.9.171",
+            "ip": "108.157.150.15",
             "port": 443,
             "ok": true,
-            "latency_ms": 6.46,
+            "latency_ms": 35.11,
             "retry_count": 0,
             "error": null
           },
           "80": {
-            "ip": "23.48.9.171",
+            "ip": "108.157.150.15",
             "port": 80,
             "ok": true,
-            "latency_ms": 16.11,
+            "latency_ms": 34.02,
             "retry_count": 0,
             "error": null
           }
         },
         "tls": {
-          "ip": "23.48.9.171",
-          "domain": "store.steampowered.com",
+          "ip": "108.157.150.15",
+          "domain": "ubisoft.com",
           "ok": true,
-          "latency_ms": 254.18,
+          "latency_ms": 181.08,
           "retry_count": 0,
           "error": null
         },
         "http": {
-          "ip": "23.48.9.171",
-          "domain": "store.steampowered.com",
+          "ip": "108.157.150.15",
+          "domain": "ubisoft.com",
           "status": "reachable",
-          "http_status": 302,
-          "latency_ms": 164.66,
+          "http_status": 301,
+          "latency_ms": 68.78,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
         },
         "https": {
-          "ip": "23.48.9.171",
-          "domain": "store.steampowered.com",
+          "ip": "108.157.150.15",
+          "domain": "ubisoft.com",
           "status": "reachable",
-          "http_status": 200,
-          "latency_ms": 562.51,
+          "http_status": 301,
+          "latency_ms": 238.03,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -1310,51 +1310,103 @@
       }
     },
     {
-      "ip": "52.210.122.184",
+      "ip": "151.101.1.55",
+      "domain": "gog.com",
+      "layers": {
+        "tcp": {
+          "443": {
+            "ip": "151.101.1.55",
+            "port": 443,
+            "ok": true,
+            "latency_ms": 7.13,
+            "retry_count": 0,
+            "error": null
+          },
+          "80": {
+            "ip": "151.101.1.55",
+            "port": 80,
+            "ok": true,
+            "latency_ms": 4.97,
+            "retry_count": 0,
+            "error": null
+          }
+        },
+        "tls": {
+          "ip": "151.101.1.55",
+          "domain": "gog.com",
+          "ok": true,
+          "latency_ms": 75.67,
+          "retry_count": 0,
+          "error": null
+        },
+        "http": {
+          "ip": "151.101.1.55",
+          "domain": "gog.com",
+          "status": "reachable",
+          "http_status": 301,
+          "latency_ms": 13.68,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        },
+        "https": {
+          "ip": "151.101.1.55",
+          "domain": "gog.com",
+          "status": "reachable",
+          "http_status": 301,
+          "latency_ms": 556.73,
+          "method": "HEAD",
+          "retry_count": 0,
+          "error": null
+        }
+      }
+    },
+    {
+      "ip": "3.248.153.37",
       "domain": "uplay.com",
       "layers": {
         "tcp": {
           "443": {
-            "ip": "52.210.122.184",
+            "ip": "3.248.153.37",
             "port": 443,
             "ok": true,
-            "latency_ms": 69.66,
+            "latency_ms": 76.47,
             "retry_count": 0,
             "error": null
           },
           "80": {
-            "ip": "52.210.122.184",
+            "ip": "3.248.153.37",
             "port": 80,
             "ok": true,
-            "latency_ms": 66.9,
+            "latency_ms": 74.99,
             "retry_count": 0,
             "error": null
           }
         },
         "tls": {
-          "ip": "52.210.122.184",
+          "ip": "3.248.153.37",
           "domain": "uplay.com",
           "ok": true,
-          "latency_ms": 277.34,
+          "latency_ms": 284.38,
           "retry_count": 0,
           "error": null
         },
         "http": {
-          "ip": "52.210.122.184",
+          "ip": "3.248.153.37",
           "domain": "uplay.com",
           "status": "reachable",
           "http_status": 301,
-          "latency_ms": 141.71,
+          "latency_ms": 152.34,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
         },
         "https": {
-          "ip": "52.210.122.184",
+          "ip": "3.248.153.37",
           "domain": "uplay.com",
           "status": "reachable",
           "http_status": 301,
-          "latency_ms": 302.9,
+          "latency_ms": 309.19,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -1370,7 +1422,7 @@
             "ip": "77.79.249.231",
             "port": 443,
             "ok": true,
-            "latency_ms": 103.84,
+            "latency_ms": 104.95,
             "retry_count": 0,
             "error": null
           },
@@ -1378,7 +1430,7 @@
             "ip": "77.79.249.231",
             "port": 80,
             "ok": true,
-            "latency_ms": 98.88,
+            "latency_ms": 102.99,
             "retry_count": 0,
             "error": null
           }
@@ -1387,7 +1439,7 @@
           "ip": "77.79.249.231",
           "domain": "gogalaxy.com",
           "ok": true,
-          "latency_ms": 351.65,
+          "latency_ms": 346.75,
           "retry_count": 0,
           "error": null
         },
@@ -1396,7 +1448,7 @@
           "domain": "gogalaxy.com",
           "status": "reachable",
           "http_status": 301,
-          "latency_ms": 207.67,
+          "latency_ms": 228.42,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -1406,7 +1458,7 @@
           "domain": "gogalaxy.com",
           "status": "reachable",
           "http_status": 301,
-          "latency_ms": 447.69,
+          "latency_ms": 438.02,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
@@ -1414,103 +1466,51 @@
       }
     },
     {
-      "ip": "99.83.192.184",
-      "domain": "battle.net",
-      "layers": {
-        "tcp": {
-          "443": {
-            "ip": "99.83.192.184",
-            "port": 443,
-            "ok": true,
-            "latency_ms": 4.48,
-            "retry_count": 0,
-            "error": null
-          },
-          "80": {
-            "ip": "99.83.192.184",
-            "port": 80,
-            "ok": true,
-            "latency_ms": 4.87,
-            "retry_count": 0,
-            "error": null
-          }
-        },
-        "tls": {
-          "ip": "99.83.192.184",
-          "domain": "battle.net",
-          "ok": true,
-          "latency_ms": 563.5,
-          "retry_count": 0,
-          "error": null
-        },
-        "http": {
-          "ip": "99.83.192.184",
-          "domain": "battle.net",
-          "status": "reachable",
-          "http_status": 301,
-          "latency_ms": 310.39,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        },
-        "https": {
-          "ip": "99.83.192.184",
-          "domain": "battle.net",
-          "status": "reachable",
-          "http_status": 301,
-          "latency_ms": 626.52,
-          "method": "HEAD",
-          "retry_count": 0,
-          "error": null
-        }
-      }
-    },
-    {
-      "ip": "118.31.67.128",
+      "ip": "120.55.44.14",
       "domain": "battlenet.com.cn",
       "layers": {
         "tcp": {
           "443": {
-            "ip": "118.31.67.128",
+            "ip": "120.55.44.14",
             "port": 443,
             "ok": true,
-            "latency_ms": 249.06,
+            "latency_ms": 246.22,
             "retry_count": 0,
             "error": null
           },
           "80": {
-            "ip": "118.31.67.128",
+            "ip": "120.55.44.14",
             "port": 80,
             "ok": true,
-            "latency_ms": 263.57,
+            "latency_ms": 254.98,
             "retry_count": 0,
             "error": null
           }
         },
         "tls": {
-          "ip": "118.31.67.128",
+          "ip": "120.55.44.14",
           "domain": "battlenet.com.cn",
           "ok": true,
-          "latency_ms": 846.11,
+          "latency_ms": 810.9,
           "retry_count": 0,
           "error": null
         },
         "http": {
-          "ip": "118.31.67.128",
+          "ip": "120.55.44.14",
           "domain": "battlenet.com.cn",
           "status": "reachable",
           "http_status": 308,
-          "latency_ms": 520.33,
+          "latency_ms": 545.76,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
         },
         "https": {
-          "ip": "118.31.67.128",
+          "ip": "120.55.44.14",
           "domain": "battlenet.com.cn",
           "status": "reachable",
           "http_status": 302,
-          "latency_ms": 1145.41,
+          "latency_ms": 1137.2,
           "method": "HEAD",
           "retry_count": 0,
           "error": null
