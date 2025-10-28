@@ -1,4 +1,4 @@
-数据更新时间: 2025-10-28 15:23:59
+数据更新时间: 2025-10-28 16:33:46
 
 分层统计: TLS ✅ 29/29 | TCP(443) ✅ 29/29 | TCP(80) ✅ 29/29 | HTTP(80) ✅ 29/29 | HTTPS(443) ✅ 29/29
 
@@ -10,34 +10,34 @@
 
 | 域名 | IP | TCP443 | TCP80 | TLS 握手 | HTTP(80) | 状态码 | HTTPS(443) | 状态码(HTTPS) | 延迟(ms) |
 |---|---|---|---|---|---|---|---|---|---|
-| [easyanticheat.net](https://easyanticheat.net/) | 104.18.3.180 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 112.96 |
-| [origin.com](https://origin.com/) | 23.61.23.194 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 123.77 |
-| [steamcdn-a.akamaihd.net](https://steamcdn-a.akamaihd.net/) | 23.54.76.44 | ✅ | ✅ | ✅ | ✅ | 200 | ✅ | 200 | 134.96 |
-| [community.akamai.steamstatic.com](https://community.akamai.steamstatic.com/) | 23.220.246.45 | ✅ | ✅ | ✅ | ✅ | 403 | ✅ | 403 | 172.6 |
-| [steam-chat.com](https://steam-chat.com/) | 23.62.69.145 | ✅ | ✅ | ✅ | ✅ | 302 | ✅ | 404 | 220.48 |
-| [api.steampowered.com](https://api.steampowered.com/) | 23.210.138.105 | ✅ | ✅ | ✅ | ✅ | 404 | ✅ | 404 | 243.59 |
-| [www.steamcommunity.com](https://www.steamcommunity.com/) | 23.62.69.145 | ✅ | ✅ | ✅ | ✅ | 302 | ✅ | 302 | 246.43 |
-| [store.akamai.steamstatic.com](https://store.akamai.steamstatic.com/) | 23.220.246.29 | ✅ | ✅ | ✅ | ✅ | 403 | ✅ | 403 | 149.2 |
-| [steamcommunity.com](https://steamcommunity.com/) | 23.210.138.105 | ✅ | ✅ | ✅ | ✅ | 302 | ✅ | 200 | 296.8 |
-| [unrealengine.com](https://unrealengine.com/) | 44.219.123.137 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 242.71 |
-| [cdn.cloudflare.steamstatic.com](https://cdn.cloudflare.steamstatic.com/) | 23.220.246.27 | ✅ | ✅ | ✅ | ✅ | 200 | ✅ | 200 | 201.4 |
-| [fortnite.com](https://fortnite.com/) | 44.193.146.34 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 265.02 |
-| [cdn.akamai.steamstatic.com](https://cdn.akamai.steamstatic.com/) | 23.220.246.41 | ✅ | ✅ | ✅ | ✅ | 200 | ✅ | 200 | 148.53 |
-| [launcher-public-service-prod06.ol.epicgames.com](https://launcher-public-service-prod06.ol.epicgames.com/) | 104.18.12.27 | ✅ | ✅ | ✅ | ✅ | 404 | ✅ | 404 | 309.99 |
-| [epicgames.com](https://epicgames.com/) | 50.19.242.88 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 302 | 245.18 |
-| [ea.com](https://ea.com/) | 23.11.226.172 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 70.26 |
-| [store.steampowered.com](https://store.steampowered.com/) | 23.78.8.100 | ✅ | ✅ | ✅ | ✅ | 302 | ✅ | 200 | 312.2 |
-| [rockstargames.com](https://rockstargames.com/) | 23.62.93.22 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 65.72 |
-| [ubisoft.com](https://ubisoft.com/) | 108.157.150.46 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 142.62 |
-| [eaassets-a.akamaihd.net](https://eaassets-a.akamaihd.net/) | 23.32.45.25 | ✅ | ✅ | ✅ | ✅ | 404 | ✅ | 404 | 61.48 |
-| [ubi.com](https://ubi.com/) | 18.215.45.132 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 151.1 |
-| [blizzard.com](https://blizzard.com/) | 166.117.114.163 | ✅ | ✅ | ✅ | ✅ | 302 | ✅ | 302 | 145.42 |
-| [battle.net](https://battle.net/) | 166.117.214.166 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 156.62 |
-| [static3.cdn.ubi.com](https://static3.cdn.ubi.com/) | 23.196.49.60 | ✅ | ✅ | ✅ | ✅ | 401 | ✅ | 401 | 171.13 |
-| [socialclub.rockstargames.com](https://socialclub.rockstargames.com/) | 104.255.105.71 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 307 | 136.02 |
-| [gog.com](https://gog.com/) | 151.101.129.55 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 548.6 |
-| [uplay.com](https://uplay.com/) | 3.248.153.37 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 362.59 |
-| [gogalaxy.com](https://gogalaxy.com/) | 77.79.249.231 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 684.03 |
-| [battlenet.com.cn](https://battlenet.com.cn/) | 118.31.19.38 | ✅ | ✅ | ✅ | ✅ | 308 | ✅ | 302 | 988.41 |
+| [community.akamai.steamstatic.com](https://community.akamai.steamstatic.com/) | 23.220.162.147 | ✅ | ✅ | ✅ | ✅ | 403 | ✅ | 403 | 110.64 |
+| [steamcdn-a.akamaihd.net](https://steamcdn-a.akamaihd.net/) | 23.194.127.229 | ✅ | ✅ | ✅ | ✅ | 200 | ✅ | 200 | 120.97 |
+| [easyanticheat.net](https://easyanticheat.net/) | 104.18.2.180 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 152.51 |
+| [steamcommunity.com](https://steamcommunity.com/) | 184.30.90.143 | ✅ | ✅ | ✅ | ✅ | 302 | ✅ | 200 | 252.99 |
+| [api.steampowered.com](https://api.steampowered.com/) | 184.30.90.143 | ✅ | ✅ | ✅ | ✅ | 404 | ✅ | 404 | 199.89 |
+| [launcher-public-service-prod06.ol.epicgames.com](https://launcher-public-service-prod06.ol.epicgames.com/) | 104.18.12.27 | ✅ | ✅ | ✅ | ✅ | 404 | ✅ | 404 | 206.18 |
+| [steam-chat.com](https://steam-chat.com/) | 184.27.150.221 | ✅ | ✅ | ✅ | ✅ | 302 | ✅ | 404 | 195.51 |
+| [store.akamai.steamstatic.com](https://store.akamai.steamstatic.com/) | 23.215.223.142 | ✅ | ✅ | ✅ | ✅ | 403 | ✅ | 403 | 240.9 |
+| [cdn.akamai.steamstatic.com](https://cdn.akamai.steamstatic.com/) | 23.220.162.151 | ✅ | ✅ | ✅ | ✅ | 200 | ✅ | 200 | 182.5 |
+| [cdn.cloudflare.steamstatic.com](https://cdn.cloudflare.steamstatic.com/) | 23.220.162.141 | ✅ | ✅ | ✅ | ✅ | 200 | ✅ | 301 | 227.04 |
+| [unrealengine.com](https://unrealengine.com/) | 44.219.123.137 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 252.44 |
+| [store.steampowered.com](https://store.steampowered.com/) | 23.45.85.166 | ✅ | ✅ | ✅ | ✅ | 302 | ✅ | 200 | 334.44 |
+| [epicgames.com](https://epicgames.com/) | 52.2.200.237 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 302 | 279.88 |
+| [fortnite.com](https://fortnite.com/) | 3.224.197.107 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 310.17 |
+| [origin.com](https://origin.com/) | 23.38.229.240 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 322.08 |
+| [www.steamcommunity.com](https://www.steamcommunity.com/) | 104.89.226.113 | ✅ | ✅ | ✅ | ✅ | 302 | ✅ | 302 | 319.56 |
+| [ubisoft.com](https://ubisoft.com/) | 18.244.214.70 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 209.3 |
+| [eaassets-a.akamaihd.net](https://eaassets-a.akamaihd.net/) | 23.45.123.173 | ✅ | ✅ | ✅ | ✅ | 404 | ✅ | 404 | 135.62 |
+| [ea.com](https://ea.com/) | 23.37.16.177 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 269.4 |
+| [ubi.com](https://ubi.com/) | 3.93.141.184 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 227.99 |
+| [blizzard.com](https://blizzard.com/) | 166.117.214.166 | ✅ | ✅ | ✅ | ✅ | 302 | ✅ | 302 | 236.99 |
+| [battle.net](https://battle.net/) | 166.117.214.166 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 229.44 |
+| [rockstargames.com](https://rockstargames.com/) | 23.203.226.101 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 184.01 |
+| [static3.cdn.ubi.com](https://static3.cdn.ubi.com/) | 23.47.201.64 | ✅ | ✅ | ✅ | ✅ | 401 | ✅ | 401 | 376.73 |
+| [socialclub.rockstargames.com](https://socialclub.rockstargames.com/) | 104.255.105.71 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 307 | 263.6 |
+| [gog.com](https://gog.com/) | 151.101.65.55 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 640.72 |
+| [uplay.com](https://uplay.com/) | 3.248.153.37 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 483.15 |
+| [gogalaxy.com](https://gogalaxy.com/) | 77.79.249.231 | ✅ | ✅ | ✅ | ✅ | 301 | ✅ | 301 | 569.79 |
+| [battlenet.com.cn](https://battlenet.com.cn/) | 118.31.19.38 | ✅ | ✅ | ✅ | ✅ | 308 | ✅ | 302 | 890.68 |
 
 提示：分层检测：TCP(443/80)→TLS握手→HTTP(80/HTTPS(443))。此测试为网络侧可达性参考，游戏实际连接可能需其他端口与协议。
