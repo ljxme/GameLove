@@ -38,24 +38,24 @@
 23.62.69.145               www.steamcommunity.com
 23.221.245.174             store.steampowered.com
 23.210.138.105             api.steampowered.com
-23.38.109.47               steamcdn-a.akamaihd.net
+23.48.99.23                steamcdn-a.akamaihd.net
 23.220.246.21              cdn.akamai.steamstatic.com
-23.220.246.45              community.akamai.steamstatic.com
-23.220.246.14              store.akamai.steamstatic.com
-23.220.246.45              cdn.cloudflare.steamstatic.com
+23.220.246.16              community.akamai.steamstatic.com
+23.220.246.29              store.akamai.steamstatic.com
+23.220.246.27              cdn.cloudflare.steamstatic.com
 23.62.69.145               steam-chat.com
 104.18.12.27               launcher-public-service-prod06.ol.epicgames.com
-3.221.86.12                epicgames.com
+98.90.239.124              epicgames.com
 52.70.59.137               unrealengine.com
-44.213.33.21               fortnite.com
-104.18.2.180               easyanticheat.net
+34.235.32.93               fortnite.com
+104.18.3.180               easyanticheat.net
 23.61.23.194               origin.com
 23.11.226.172              ea.com
-23.55.236.139              eaassets-a.akamaihd.net
+23.48.99.18                eaassets-a.akamaihd.net
 18.172.122.54              ubisoft.com
-52.3.190.44                ubi.com
-34.248.179.203             uplay.com
-23.196.49.60               static3.cdn.ubi.com
+34.195.4.34                ubi.com
+52.17.103.165              uplay.com
+184.51.220.238             static3.cdn.ubi.com
 166.117.114.163            battle.net
 166.117.114.163            blizzard.com
 120.55.44.14               battlenet.com.cn
@@ -63,13 +63,13 @@
 77.79.249.231              gogalaxy.com
 23.62.93.22                rockstargames.com
 104.255.105.71             socialclub.rockstargames.com
-# Update time: 2025-11-25 09:58:34
+# Update time: 2025-11-25 11:20:16
 # Update url: https://raw.githubusercontent.com/artemisia1107/GameLove/refs/heads/main/hosts
 # Star me: https://github.com/artemisia1107/GameLove
 # GameLove Host End
 ```
 
-该内容会自动定时更新，数据更新时间：2025-11-25 09:58:34
+该内容会自动定时更新，数据更新时间：2025-11-25 11:20:16
 
 > Tips：根目录 `hosts`、`hosts.json`、`scripts/hosts/*` 以及 `scripts/connectivity/*` 均仅由 CI 自动更新。请勿手动修改或在 PR 中更改这些文件，以免与自动更新产生冲突。若需触发即时更新，请在 Actions 中手动运行 `Update GameLove Hosts` 工作流。
 
